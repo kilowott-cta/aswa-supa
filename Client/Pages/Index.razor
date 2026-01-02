@@ -1,8 +1,6 @@
 ﻿@page "/"
-@inject Supabase.Client SupabaseClient
-
-@using Supabase.Postgrest.Attributes;
-@using Supabase.Postgrest.Models;
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationService AuthService
 
 <PageTitle>Index</PageTitle>
 
@@ -26,10 +24,22 @@ Welcome to your new app.
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await SupabaseClient.From<Todo>().Get();
-        todos = response.Models;
-        Console.WriteLine($"Fetched {todos.Count} todos from the database.");
-        StateHasChanged();
+        await FetchTodosAsync();
+    }
+
+    private async Task FetchTodosAsync()
+    {
+        var client = HttpClientFactory.CreateClient("SupabaseClient");
+        var HttpRequestMessage = new HttpRequestMessage(
+            HttpMethod.Get, 
+            $"{AuthService.SupabaseUrl}/rest/v1/todos");
+        HttpRequestMessage.Headers.Add("apikey", AuthService.SupabaseKey);
+        HttpRequestMessage.Headers.Add("Authorization", $"Bearer {AuthService.SupabaseKey}");    
+        var response = await client.SendAsync(HttpRequestMessage);
+        if (response.IsSuccessStatusCode)
+        {
+            todos = await response.Content.ReadFromJsonAsync<List<Todo>>() ?? new List<Todo>();
+        }
     }
 
     [Table("todos")]

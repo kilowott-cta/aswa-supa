@@ -1,7 +1,50 @@
 ﻿@page "/"
+@inject Supabase.Client SupabaseClient
+
+@using Supabase.Postgrest.Attributes;
+@using Supabase.Postgrest.Models;
 
 <PageTitle>Index</PageTitle>
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+<h3>Todo List</h3>
+<ul>
+    @foreach (var todo in todos)
+    {
+        <li>    
+            <input type="checkbox" checked="@todo.IsComplete" disabled />
+            @todo.Title (Created at: @todo.CreatedAt)
+        </li>
+    }
+</ul>
+
+@code {
+    private List<Todo> todos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await SupabaseClient.From<Todo>().Get();
+        todos = response.Models;
+        Console.WriteLine($"Fetched {todos.Count} todos from the database.");
+        StateHasChanged();
+    }
+
+    [Table("todos")]
+    class Todo : BaseModel
+    {
+        [PrimaryKey("id", false)]
+        public int Id { get; set; }
+
+        [Column("title")]
+        public string? Title { get; set; }
+
+        [Column("is_complete")]
+        public bool IsComplete { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+    }
+}

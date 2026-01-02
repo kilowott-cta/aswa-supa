@@ -14,4 +14,3 @@ _repo.*/
 *.lnk
 node_modules/
 local.settings.json
-Client/wwwroot/appsettings.json

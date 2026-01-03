@@ -1,12 +1,28 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject BlazorBasic.Services.AuthenticationService Auth
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <AuthorizationChallenge />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            @* This is only for .NET 9 - else use NotFoundPage parameter on Router *@
+		<LayoutView Layout="@typeof(MainLayout)">
+            <h3>Not Found</h3>
+		</LayoutView>
+	</NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.InitializeAsync();
+    }
+}

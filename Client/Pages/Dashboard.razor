@@ -1,0 +1,60 @@
+
+@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationService AuthService
+
+@attribute [Authorize]
+
+<h1>Dashboard</h1>
+<h3>Todo List</h3>
+<ul>
+    @foreach (var todo in todos)
+    {
+        <li>    
+            <input type="checkbox" checked="@todo.IsComplete" disabled />
+            @todo.Title (Created at: @todo.CreatedAt)
+        </li>
+    }
+</ul>
+
+
+@code {
+    private List<Todo> todos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchTodosAsync();
+    }
+
+    private async Task FetchTodosAsync()
+    {
+        var client = HttpClientFactory.CreateClient("SupabaseClient");
+        var HttpRequestMessage = new HttpRequestMessage(
+            HttpMethod.Get, 
+            $"{AuthService.SupabaseUrl}/rest/v1/todos");
+        HttpRequestMessage.Headers.Add("apikey", AuthService.SupabaseKey);
+        HttpRequestMessage.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");    
+        HttpResponseMessage? response = await client.SendAsync(HttpRequestMessage);
+        if (response.IsSuccessStatusCode)
+        {
+            todos = await response.Content.ReadFromJsonAsync<List<Todo>>() ?? new List<Todo>();
+        }
+    }
+
+    [Table("todos")]
+    class Todo : BaseModel
+    {
+        [PrimaryKey("id", false)]
+        public int Id { get; set; }
+
+        [Column("title")]
+        public string? Title { get; set; }
+
+        [Column("is_complete")]
+        public bool IsComplete { get; set; }
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+    }
+}

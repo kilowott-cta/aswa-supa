@@ -1,0 +1,21 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
+
+<div>
+    <header class="w-100">
+            <nav class="navbar-dark bg-primary p-2">
+                <div class="d-flex">
+                    <a class="navbar-brand" href="">BlazorSupabase</a>
+                    <NavLink class="nav-link text-light" href="dashboard">Dashboard</NavLink>
+                    <NavLink class="nav-link text-light" href="about">About</NavLink>
+                    <span class="flex-grow-1"></span>
+                    <AccessControl />
+                </div>
+            </nav>
+    </header>
+    <main class="content">
+        <article class="px-4">
+            @Body
+        </article>
+    </main>
+</div>

@@ -2,7 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace BlazorBasic.Client.Services;
+namespace BlazorBasic.Services;
 
 public class SupabaseSession
 {
@@ -32,17 +32,17 @@ public class AuthenticationService
         _configuration = configuration;
         _navigationManager = navigationManager;
     }
-    public string SupabaseUrl 
+    public string SupabaseUrl
         => _configuration["Supabase:Url"] ?? _configuration["SUPABASE_URL"] ?? string.Empty;
-    public string SupabaseKey 
+    public string SupabaseKey
         => _configuration["Supabase:Key"] ?? _configuration["SUPABASE_KEY"] ?? string.Empty;
 
-    public bool IsAuthenticated => _session != null && !string.IsNullOrEmpty(_session.AccessToken); 
+    public bool IsAuthenticated => _session != null && !string.IsNullOrEmpty(_session.AccessToken);
     public string? AccessToken => _session?.AccessToken;
     public string? RefreshToken => _session?.RefreshToken;
     public string? Email => _session?.Email;
 
-    public async Task InitializedAsync()
+    public async Task InitializeAsync()
     {
         try
         {
@@ -80,16 +80,16 @@ public class AuthenticationService
         var jsonDoc = JsonDocument.Parse(responseBody);
         var root = jsonDoc.RootElement;
         if (root.TryGetProperty("access_token", out var at))
-            {
-                var access = at.GetString();
-                var refresh = root.GetProperty("refresh_token").GetString();
-                _session = new SupabaseSession { AccessToken = access, RefreshToken = refresh, Email = email };
-                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "supabase_session", JsonSerializer.Serialize(_session));
-                OnAuthStateChanged?.Invoke();
-                return true;
-            }
+        {
+            var access = at.GetString();
+            var refresh = root.GetProperty("refresh_token").GetString();
+            _session = new SupabaseSession { AccessToken = access, RefreshToken = refresh, Email = email };
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "supabase_session", JsonSerializer.Serialize(_session));
+            OnAuthStateChanged?.Invoke();
+            return true;
+        }
         return false;
-    } 
+    }
 
     public async Task<(bool Success, string? Message)> SignUpWithPasswordAsync(string email, string password)
     {
@@ -97,7 +97,7 @@ public class AuthenticationService
         {
             return (false, "Supabase configuration is missing.");
         }
-        var client = _httpClientFactory.CreateClient("Supabase");
+        var client = _httpClientFactory.CreateClient("SupabaseClient");
         var request = new HttpRequestMessage(HttpMethod.Post, $"{SupabaseUrl}/auth/v1/signup");
         var body = JsonSerializer.Serialize(new
         {
@@ -128,7 +128,7 @@ public class AuthenticationService
                 await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "supabase_session", JsonSerializer.Serialize(_session));
                 OnAuthStateChanged?.Invoke();
                 return (true, "Sign-up successful and signed in.");
-            }   
+            }
             return (true, "Sign-up successful. Please check your email for confirmation.");
         }
         catch
@@ -138,26 +138,32 @@ public class AuthenticationService
     }
 
     public async Task SetSessionFromFragmentAsync(string fragment)
+    {
+        if (string.IsNullOrEmpty(fragment)) return;
+        var parts = fragment.TrimStart('#').Split('&', StringSplitOptions.RemoveEmptyEntries);
+        var dict = parts.Select(p => p.Split('=', 2)).Where(a => a.Length == 2)
+                        .ToDictionary(a => a[0], a => Uri.UnescapeDataString(a[1]));
+        if (dict.TryGetValue("access_token", out var access))
         {
-            if (string.IsNullOrEmpty(fragment)) return;
-            var parts = fragment.TrimStart('#').Split('&', StringSplitOptions.RemoveEmptyEntries);
-            var dict = parts.Select(p => p.Split('=', 2)).Where(a => a.Length == 2)
-                            .ToDictionary(a => a[0], a => Uri.UnescapeDataString(a[1]));
-            if (dict.TryGetValue("access_token", out var access))
-            {
-                dict.TryGetValue("refresh_token", out var refresh);
-                _session = new SupabaseSession { AccessToken = access, RefreshToken = refresh };
-                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "supabase_session", JsonSerializer.Serialize(_session));
-                OnAuthStateChanged?.Invoke();
-            }
-        }
-
-        public async Task SignOutAsync()
-        {
-            _session = null;
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "supabase_session");
+            dict.TryGetValue("refresh_token", out var refresh);
+            _session = new SupabaseSession { AccessToken = access, RefreshToken = refresh };
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "supabase_session", JsonSerializer.Serialize(_session));
             OnAuthStateChanged?.Invoke();
-            _navigationManager.NavigateTo("/");
         }
+    }
 
+    public async Task SignOutAsync()
+    {
+        _session = null;
+        await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", "supabase_session");
+        OnAuthStateChanged?.Invoke();
+        _navigationManager.NavigateTo("/");
+    }
+
+    public string GetOAuthUrl(string provider)
+    {
+        var redirect = _navigationManager.BaseUri.TrimEnd('/') + "/authentication-callback";
+        var url = $"{SupabaseUrl}/auth/v1/authorize?provider={provider}&redirect_to={Uri.EscapeDataString(redirect)}";
+        return url;
+    }
 }

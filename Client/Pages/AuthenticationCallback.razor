@@ -1,0 +1,22 @@
+@page "/authentication-callback"
+@inject BlazorBasic.Services.AuthenticationService Auth
+@inject NavigationManager Nav
+
+<p>Processing authentication...</p>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Supabase returns tokens in URL fragment (hash)
+        var fragment = new Uri(Nav.Uri).Fragment;
+        if (!string.IsNullOrEmpty(fragment))
+        {
+            await Auth.SetSessionFromFragmentAsync(fragment);
+            Nav.NavigateTo("/dashboard");
+        }
+        else
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+}

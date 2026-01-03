@@ -1,0 +1,19 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject BlazorBasic.Services.AuthenticationService Auth
+
+<AuthorizeView>
+    <Authorized>
+        <span class="navbar-text text-light me-3">@Auth.Email</span>
+        <button class="btn btn-sm btn-light text-primary" @onclick="Logout">Logout</button>
+    </Authorized>
+    <NotAuthorized>
+        <NavLink class="nav-link text-light" href="login">Login</NavLink>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private async Task Logout()
+    {
+        if (Auth != null) await Auth.SignOutAsync();
+    }
+}

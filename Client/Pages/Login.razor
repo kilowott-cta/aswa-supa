@@ -1,0 +1,100 @@
+@page "/login"
+@inject BlazorBasic.Services.AuthenticationService Auth
+@inject NavigationManager Nav
+
+
+<div class="w-50" style="margin: 0 auto;">
+    <h3>@(isRegistering ? "Register" : "Login")</h3>
+    <label class="form-label">Email</label>
+    <input class="form-control" @bind="email" />
+    <label class="form-label">Password</label>
+    <input type="password" class="form-control" @bind="password" />
+    @if (isRegistering)
+    {
+        <label class="form-label">Confirm Password</label>
+        <input type="password" class="form-control" @bind="confirmPassword" />
+    }
+
+    <div class="mt-2">
+        @if (isRegistering)
+        {
+            <button class="btn btn-primary" @onclick="OnRegister">Create account</button>
+            <button class="btn btn-link" @onclick="() => isRegistering = false">Have an account? Login</button>
+        }
+        else
+        {
+            <button class="btn btn-primary" @onclick="OnSubmit">Sign in</button>
+            <button class="btn btn-link" @onclick="() => isRegistering = true">Create account</button>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="text-danger mt-2">@error</div>
+    }
+    @if (!string.IsNullOrEmpty(info))
+    {
+        <div class="text-success mt-2">@info</div>
+    }
+
+    <div>
+    <p>Or sign in with:</p>
+    <a class="btn btn-outline-secondary me-2" href="@Auth.GetOAuthUrl("google")">Google</a>
+    <a class="btn btn-outline-secondary" href="@Auth.GetOAuthUrl("github")">GitHub</a>
+</div>
+</div>
+
+
+
+@code {
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string confirmPassword = string.Empty;
+    private string? error;
+    private string? info;
+    private bool isRegistering = false;
+
+    private async Task OnSubmit()
+    {
+        error = null;
+        info = null;
+        var ok = await Auth.SignInWithPasswordAsync(email, password);
+        if (ok)
+        {
+            Nav.NavigateTo("/dashboard");
+        }
+        else
+        {
+            error = "Sign in failed. Check credentials.";
+        }
+    }
+
+    private async Task OnRegister()
+    {
+        error = null;
+        info = null;
+        if (password != confirmPassword)
+        {
+            error = "Passwords do not match.";
+            return;
+        }
+
+        var (Success, Message) = await Auth.SignUpWithPasswordAsync(email, password);
+        if (Success)
+        {
+            if (Auth.IsAuthenticated)
+            {
+                Nav.NavigateTo("/dashboard");
+            }
+            else
+            {
+                info = Message ?? "Registration successful. Check your email for confirmation.";
+                isRegistering = false;
+            }
+        }
+        else
+        {
+            error = Message ?? "Registration failed.";
+        }
+    }
+}

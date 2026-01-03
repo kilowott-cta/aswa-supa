@@ -17,6 +17,7 @@ public class SupabaseAuthenticationStateProvider : AuthenticationStateProvider
     private void Notify() => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
+        // Not sure what happens here ..
         var identity = _authenticationService.IsAuthenticated
             ? new ClaimsIdentity(ParseClaimsFromJwt(_authenticationService.AccessToken ?? ""), "jwt")
             : new ClaimsIdentity();

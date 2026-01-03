@@ -1,0 +1,18 @@
+<div>
+    <strong>@Field</strong>
+    <div>
+        Count: @count
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Field { get; set; } = string.Empty;
+    [Parameter] public List<Project> Projects { get; set; } = new List<Project>();
+
+    private long count = 0;
+
+    protected override void OnParametersSet()
+    {
+        count = Projects.Count(p => p.BallparkHours != "-");
+    }
+}

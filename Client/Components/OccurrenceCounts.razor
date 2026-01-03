@@ -1,0 +1,24 @@
+<strong>@Field</strong>
+<ul>
+        @foreach (KeyValuePair<string, int> item in items)
+        {
+            <li>@item.Key (@item.Value)</li>
+        }
+    </ul>
+
+@code {
+    [Parameter] public int MaxItems { get; set; } = 10;
+    [Parameter] public string Field { get; set; } = string.Empty;
+    [Parameter] public List<Project> Projects { get; set; } = new List<Project>();
+
+    private Dictionary<string, int> items = new();
+
+    protected override void OnParametersSet()
+    {
+        Dictionary<string, int>? unsorted = AggregationService.GetOccurenceCountsFromZohoProjectsEntities(Projects, Field);
+        
+        items = unsorted.OrderByDescending(kv => kv.Value)
+        .Take(MaxItems)
+        .ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+}

@@ -1,60 +1,68 @@
 
 @page "/dashboard"
 @using Microsoft.AspNetCore.Authorization
+
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationService AuthService
 
 @attribute [Authorize]
 
 <h1>Dashboard</h1>
-<h3>Todo List</h3>
-<ul>
-    @foreach (var todo in todos)
-    {
-        <li>    
-            <input type="checkbox" checked="@todo.IsComplete" disabled />
-            @todo.Title (Created at: @todo.CreatedAt)
-        </li>
-    }
-</ul>
+<h3>Projects: @projects.Count</h3>
+
+    <div>
+        <OccurrenceCounts Field="Designers" Projects="projects" />
+    </div>
+
+    <div>
+        <OccurrenceCounts Field="Analysts" Projects="projects" />
+    </div>
+
+    <div>
+        <OccurrenceCounts Field="Architects" Projects="projects" />
+    </div>
+
+    <div>
+        <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="ProjectStatus" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="ProjectStage" Projects="projects" />
+    </div>
+    <div>
+        <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+    </div>
+
+
 
 
 @code {
-    private List<Todo> todos = new();
+    private List<Project> projects = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await FetchTodosAsync();
+        await FetchProjectsAsync();
     }
 
-    private async Task FetchTodosAsync()
+    private async Task FetchProjectsAsync()
     {
-        var client = HttpClientFactory.CreateClient("SupabaseClient");
-        var HttpRequestMessage = new HttpRequestMessage(
+        HttpClient? client = HttpClientFactory.CreateClient("SupabaseClient");
+        HttpRequestMessage? HttpRequestMessage = new HttpRequestMessage(
             HttpMethod.Get, 
-            $"{AuthService.SupabaseUrl}/rest/v1/todos");
+            $"{AuthService.SupabaseUrl}/rest/v1/projects");
         HttpRequestMessage.Headers.Add("apikey", AuthService.SupabaseKey);
         HttpRequestMessage.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");    
         HttpResponseMessage? response = await client.SendAsync(HttpRequestMessage);
         if (response.IsSuccessStatusCode)
         {
-            todos = await response.Content.ReadFromJsonAsync<List<Todo>>() ?? new List<Todo>();
+            var json = await response.Content.ReadAsStringAsync();
+            projects = await response.Content.ReadFromJsonAsync<List<Project>>() ?? new List<Project>();
         }
     }
 
-    [Table("todos")]
-    class Todo : BaseModel
-    {
-        [PrimaryKey("id", false)]
-        public int Id { get; set; }
-
-        [Column("title")]
-        public string? Title { get; set; }
-
-        [Column("is_complete")]
-        public bool IsComplete { get; set; }
-
-        [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
-    }
 }

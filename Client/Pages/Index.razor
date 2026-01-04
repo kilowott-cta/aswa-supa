@@ -15,7 +15,7 @@ Welcome to your new app.
     protected override async Task OnInitializedAsync()
     {
         var client = HttpClientFactory.CreateClient("ApiClient");
-        var response = await client.GetAsync("/api/Messager");
+        var response = await client.GetAsync("/api/pingpong");
         response.EnsureSuccessStatusCode();
         if (response.IsSuccessStatusCode)
         {

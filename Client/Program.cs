@@ -38,6 +38,12 @@ builder.Services.AddHttpClient<Supabase.Client>("SupabaseClient", client =>
 	client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 });
 
+builder.Services.AddHttpClient("ApiClient", client =>
+{
+	// Assuming the API is hosted at the same base address as the Blazor app
+	client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+});
+
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 

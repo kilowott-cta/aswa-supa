@@ -2,9 +2,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api", "Api\api.csproj", "{CBFA08EA-AECE-205F-7B85-326FD0B81BAD}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{2CB42F12-E813-91B3-7D11-3220E40BEF4A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{D82C56D6-B2CD-F611-9E31-04638F7EC30E}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorBasic", "Client\BlazorBasic.csproj", "{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "obj", "obj", "{DE7855AF-7336-D889-443A-2C13860797ED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Debug", "Debug", "{7C12A11C-F55F-40E4-6B93-C32A2430011A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "net8.0", "net8.0", "{BBDA566F-7F0C-C21A-ADCC-BDDBE38052DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkerExtensions", "Api\obj\Debug\net8.0\WorkerExtensions\WorkerExtensions.csproj", "{17C9519B-5F46-B7A0-B921-0F99AE6838CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,18 +24,30 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CBFA08EA-AECE-205F-7B85-326FD0B81BAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBFA08EA-AECE-205F-7B85-326FD0B81BAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBFA08EA-AECE-205F-7B85-326FD0B81BAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBFA08EA-AECE-205F-7B85-326FD0B81BAD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17C9519B-5F46-B7A0-B921-0F99AE6838CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17C9519B-5F46-B7A0-B921-0F99AE6838CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17C9519B-5F46-B7A0-B921-0F99AE6838CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17C9519B-5F46-B7A0-B921-0F99AE6838CA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8} = {2CB42F12-E813-91B3-7D11-3220E40BEF4A}
+		{DE7855AF-7336-D889-443A-2C13860797ED} = {D82C56D6-B2CD-F611-9E31-04638F7EC30E}
+		{7C12A11C-F55F-40E4-6B93-C32A2430011A} = {DE7855AF-7336-D889-443A-2C13860797ED}
+		{BBDA566F-7F0C-C21A-ADCC-BDDBE38052DB} = {7C12A11C-F55F-40E4-6B93-C32A2430011A}
+		{17C9519B-5F46-B7A0-B921-0F99AE6838CA} = {BBDA566F-7F0C-C21A-ADCC-BDDBE38052DB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {29989B59-6963-4F18-AA38-C1F930EC4708}
+		SolutionGuid = {6D5AD724-8E04-45C8-A387-51C9EA13E73D}
 	EndGlobalSection
 EndGlobal

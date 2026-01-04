@@ -22,6 +22,6 @@ public class Health
         _logger.LogInformation("C# HTTP trigger function processed a request.");
         ClaimsPrincipal user = req.HttpContext.User;
         _logger.LogInformation("User: {User}", user.Identity.Name);
-        return new OkObjectResult("Welcome to Azure Functions!");
+        return new OkObjectResult("Welcome to Functions!");
     }
 }

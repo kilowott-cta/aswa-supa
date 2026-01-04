@@ -1,0 +1,12 @@
+{
+    "routes": [
+        {
+            "route": "/dashboard",
+            "allowedRoles": ["authenticated"]
+        },
+        {
+            "route": "/api/*",
+            "allowedRoles": ["authenticated"]
+        }
+    ]
+}

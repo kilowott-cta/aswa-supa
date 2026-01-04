@@ -3,6 +3,7 @@
   "configurations": {
     "aswa-supa": {
       "appLocation": "Client",
+      "apiLocation": "Api",
       "outputLocation": "bin/wwwroot",
       "appBuildCommand": "dotnet publish -c Release -o bin",
       "run": "dotnet watch run",

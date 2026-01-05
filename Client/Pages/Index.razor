@@ -20,7 +20,6 @@ Welcome to your Static Web Apps.
         if (response.IsSuccessStatusCode)
         {
             message = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Message from API: {message}");
         }
     }
 }

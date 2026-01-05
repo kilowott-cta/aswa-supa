@@ -8,7 +8,7 @@
 @attribute [Authorize]
 
 <h1>Dashboard</h1>
-<h3>Projects: @projects.Count</h3>
+<h3>Projects: @projects.Count for @message</h3>
 
     <div>
         <OccurrenceCounts Field="Designers" Projects="projects" />
@@ -43,10 +43,14 @@
 
 @code {
     private List<Project> projects = new();
+    private string message = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        await FetchProjectsAsync();
+        var tasks = new List<Task>();
+        tasks.Add(CheckSupabaseHealthAsync());
+        tasks.Add(FetchProjectsAsync());
+        await Task.WhenAll(tasks);
     }
 
     private async Task FetchProjectsAsync()
@@ -62,6 +66,17 @@
         {
             var json = await response.Content.ReadAsStringAsync();
             projects = await response.Content.ReadFromJsonAsync<List<Project>>() ?? new List<Project>();
+        }
+    }
+
+    private async Task CheckSupabaseHealthAsync()
+    {
+        var client = HttpClientFactory.CreateClient("ApiClient");
+        var response = await client.GetAsync("/api/supabasehealth");
+        response.EnsureSuccessStatusCode();
+        if (response.IsSuccessStatusCode)
+        {
+            message = await response.Content.ReadAsStringAsync();
         }
     }
 

@@ -2,6 +2,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Supabase;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -10,5 +11,17 @@ builder.ConfigureFunctionsWebApplication();
 builder.Services
     .AddApplicationInsightsTelemetryWorkerService()
     .ConfigureFunctionsApplicationInsights();
+
+var configuration = builder.Configuration;
+var supabaseUrl = configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"] ?? string.Empty;
+var supabaseKey = configuration["Supabase:Key"] ?? configuration["SUPABASE_KEY"] ?? string.Empty;
+builder.Services.AddSingleton<Client>(sp =>
+{
+    var options = new SupabaseOptions
+    {
+        AutoConnectRealtime = true,
+    };
+    return new Client(supabaseUrl, supabaseKey, options);
+});
 
 builder.Build().Run();

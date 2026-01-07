@@ -64,7 +64,7 @@
         }
         else 
         {
-            message = $"{response.StatusCode.ToString()} {await response.Content.ReadAsStringAsync()}";
+            message = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
         }
     }
 }

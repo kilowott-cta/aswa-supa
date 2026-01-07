@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using DomainBasic.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -27,10 +28,11 @@ public class Health
     }
 
     [Function("pingpong")]
-    public IActionResult PingPong([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
+    public async Task<IActionResult> PingPong([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
     {
         _logger.LogInformation("C# HTTP trigger function processed a request.");
         ClaimsPrincipal user = req.HttpContext.User;
+        
         _logger.LogInformation("User: {User}", user.Identity?.Name);
         return new OkObjectResult("Welcome to Functions!");
     }
@@ -43,28 +45,30 @@ public class Health
             return new UnauthorizedResult();
         }
         var results = await _supabaseClient
-            .From<DataBasic.Dbo.Project>().Get();
+            .From<DomainBasic.Models.Dbo.Project>().Get();
 
-        var projects = results.Models.Select(p => new DataBasic.Dto.Project
-        {
-            ProjectId = p.ProjectId,
-            ProjectName = p.ProjectName,
-            Stage = p.Stage,
-            Status = p.Status,
-            ClientName = p.ClientName,
-            AccountManager = p.AccountManager,
-            Designers= p.Designers,
-            Architects = p.Architects,
-            Analysts = p.Analysts,
-            Tags = p.Tags,
-            SoldHours = p.SoldHours,
-            BallparkHours = p.BallparkHours,
-            Owner = p.Owner,
-            PresalesPriority = p.PresalesPriority,
-            Skillsets = p.Skillsets,
-            UpdatedAt = p.UpdatedAt,
-            CreatedAt = p.CreatedAt
-        });
+        var projects = results.Models.Select(p => p.ToDto());
+
+        // var projects = results.Models.Select(p => new DomainBasic.Models.Dto.Project
+        // {
+        //     ProjectId = p.ProjectId,
+        //     ProjectName = p.ProjectName,
+        //     Stage = p.Stage,
+        //     Status = p.Status,
+        //     ClientName = p.ClientName,
+        //     AccountManager = p.AccountManager,
+        //     Designers= p.Designers,
+        //     Architects = p.Architects,
+        //     Analysts = p.Analysts,
+        //     Tags = p.Tags,
+        //     SoldHours = p.SoldHours,
+        //     BallparkHours = p.BallparkHours,
+        //     Owner = p.Owner,
+        //     PresalesPriority = p.PresalesPriority,
+        //     Skillsets = p.Skillsets,
+        //     UpdatedAt = p.UpdatedAt,
+        //     CreatedAt = p.CreatedAt
+        // });
         return new OkObjectResult(projects);
     }
 }

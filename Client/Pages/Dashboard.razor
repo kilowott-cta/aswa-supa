@@ -1,91 +1,17 @@
 
 @page "/dashboard"
 @using Microsoft.AspNetCore.Authorization
-@using DataBasic.Dto
 
-@inject IHttpClientFactory HttpClientFactory
-@inject AuthenticationService AuthService
 
 @attribute [Authorize]
 
-<h1>Dashboard</h1>
-<h3>Projects: @projects.Count </h3>
-<span>@message</span>
-    <div>
-        <OccurrenceCounts Field="Designers" Projects="projects" />
-    </div>
-
-    <div>
-        <OccurrenceCounts Field="Analysts" Projects="projects" />
-    </div>
-
-    <div>
-        <OccurrenceCounts Field="Architects" Projects="projects" />
-    </div>
-
-    <div>
-        <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
+<div class="d-flex">
+    <div class="w-50">
+        <SupabaseClient />
     </div>
     <div>
-        <OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="ProjectStatus" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="ProjectStage" Projects="projects" />
-    </div>
-    <div>
-        <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+        <SupabaseServer />
     </div>
 
+</div>
 
-
-
-@code {
-    private List<Project> projects = new();
-    private string message = string.Empty;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var tasks = new List<Task>();
-        //tasks.Add(CheckSupabaseHealthAsync());
-        //tasks.Add(FetchProjectsAsync());
-        tasks.Add(GetProjectsCountAsync());
-        await Task.WhenAll(tasks);
-    }
-
-    @* private async Task FetchProjectsAsync()
-    {
-        HttpClient? client = HttpClientFactory.CreateClient("SupabaseClient");
-        HttpRequestMessage? request = new HttpRequestMessage(
-            HttpMethod.Get, 
-            $"{AuthService.SupabaseUrl}/rest/v1/projects");
-        request.Headers.Add("apikey", AuthService.SupabaseKey);
-        request.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");    
-        HttpResponseMessage? response = await client.SendAsync(request);
-        if (response.IsSuccessStatusCode)
-        {
-            string? json = await response.Content.ReadAsStringAsync();
-            projects = await response.Content.ReadFromJsonAsync<List<Project>>() ?? new List<Project>();
-        }
-    } *@
-
-
-    private async Task GetProjectsCountAsync()
-    {
-        HttpClient? client = HttpClientFactory.CreateClient("ApiClient");
-        HttpRequestMessage? request = new HttpRequestMessage(
-            HttpMethod.Get, 
-            "/api/projects");
-        request.Headers.Add("apikey", AuthService.SupabaseKey);
-        request.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");
-        HttpResponseMessage? response = await client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        if (response.IsSuccessStatusCode)
-        {
-            string? json = await response.Content.ReadAsStringAsync();
-            projects = await response.Content.ReadFromJsonAsync<List<Project>>() ?? new List<Project>();
-        }
-    }
-}

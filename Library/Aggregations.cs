@@ -1,8 +1,8 @@
-using DataBasic.Dto;
+using DomainBasic.Models.Dto;
 
-namespace BlazorBasic.Services;
+namespace DomainBasic;
 
-public static class AggregationService
+public static class Aggregations
 {
     public static Dictionary<string, int> GetOccurenceCountsFromZohoProjectsEntities(IEnumerable<Project> rows, string field)
     {

@@ -1,4 +1,4 @@
-namespace DataBasic.Dbo;
+namespace DomainBasic.Models.Dbo;
 
 using System.Text.Json.Serialization;
 using Supabase.Postgrest.Attributes;

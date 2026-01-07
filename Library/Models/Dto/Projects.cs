@@ -1,4 +1,4 @@
-namespace DataBasic.Dto;
+namespace DomainBasic.Models.Dto;
 
 
 public class Project

@@ -1,0 +1,65 @@
+@using DomainBasic.Models.Dto
+
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationService AuthService
+
+<h2>Server</h2>
+<h3>Projects: @projects.Count </h3>
+<span>@message</span>
+    <div>
+        <OccurrenceCounts Field="Designers" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="Analysts" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="Architects" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="ProjectStatus" Projects="projects" />
+    </div>
+    <div>
+        <OccurrenceCounts Field="ProjectStage" Projects="projects" />
+    </div>
+    <div>
+        <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+    </div>
+
+
+
+
+@code {
+    private List<Project> projects = new List<Project>();
+    private string message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<Task>? tasks = new List<Task>();
+        tasks.Add(GetProjectsCountAsync());
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task GetProjectsCountAsync()
+    {
+        HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
+        HttpRequestMessage? request = new HttpRequestMessage(
+            HttpMethod.Get, 
+            requestUri: "/api/projects");
+        request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
+        request.Headers.Add(name: "Authorization", value: $"Bearer {AuthService.AccessToken}");
+        HttpResponseMessage? response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        if (response.IsSuccessStatusCode)
+        {
+            string? json = await response.Content.ReadAsStringAsync();
+            projects = await response.Content.ReadFromJsonAsync<List<Project>>() 
+                ?? new List<Project>();
+        }
+    }
+}

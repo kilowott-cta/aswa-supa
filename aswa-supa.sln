@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunctionBasic", "Api\Functi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorBasic", "Client\BlazorBasic.csproj", "{56A8DF79-58DE-23F2-EEA2-C00A75CD83F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataBasic", "Data\DataBasic.csproj", "{2AEE4491-6FAA-4691-8104-7AF5F3DB344C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataBasic", "Library\DomainBasic.csproj", "{2AEE4491-6FAA-4691-8104-7AF5F3DB344C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

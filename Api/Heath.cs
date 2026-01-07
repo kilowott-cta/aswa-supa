@@ -36,7 +36,7 @@ public class Health
     }
 
     [Function("projects")]
-    public async Task<IActionResult> ProjectsCount([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
+    public async Task<IActionResult> GetProjects([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         if (!await IsAuthorized(req))
         {

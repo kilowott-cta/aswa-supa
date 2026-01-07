@@ -34,8 +34,7 @@
     <div>
         <NonEmptyCounts Field="BallparkHours" Projects="projects" />
     </div>
-
-
+<span>Error: @message</span>
 
 
 @code {
@@ -65,6 +64,10 @@
                 = await response.Content.ReadFromJsonAsync<List<DomainBasic.Models.Dbo.Project>>() 
                 ?? new List<DomainBasic.Models.Dbo.Project>();
             projects = results.Select(p => p.ToDto()).ToList();
+        }
+        else 
+        {
+            message = await response.Content.ReadAsStringAsync();
         }
     } 
 }

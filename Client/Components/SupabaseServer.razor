@@ -31,7 +31,7 @@
         <NonEmptyCounts Field="BallparkHours" Projects="projects" />
     </div>
 
-
+<span>Error: @message</span>
 
 
 @code {
@@ -54,12 +54,16 @@
         request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
         request.Headers.Add(name: "Authorization", value: $"Bearer {AuthService.AccessToken}");
         HttpResponseMessage? response = await client.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        //response.EnsureSuccessStatusCode();
         if (response.IsSuccessStatusCode)
         {
             string? json = await response.Content.ReadAsStringAsync();
             projects = await response.Content.ReadFromJsonAsync<List<Project>>() 
                 ?? new List<Project>();
+        }
+        else 
+        {
+            message = await response.Content.ReadAsStringAsync();
         }
     }
 }

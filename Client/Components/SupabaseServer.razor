@@ -60,10 +60,11 @@
             string? json = await response.Content.ReadAsStringAsync();
             projects = await response.Content.ReadFromJsonAsync<List<Project>>() 
                 ?? new List<Project>();
+            message = response.StatusCode.ToString();
         }
         else 
         {
-            message = await response.Content.ReadAsStringAsync();
+            message = $"{response.StatusCode.ToString()} {await response.Content.ReadAsStringAsync()}";
         }
     }
 }

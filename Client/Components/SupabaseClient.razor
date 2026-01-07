@@ -64,10 +64,11 @@
                 = await response.Content.ReadFromJsonAsync<List<DomainBasic.Models.Dbo.Project>>() 
                 ?? new List<DomainBasic.Models.Dbo.Project>();
             projects = results.Select(p => p.ToDto()).ToList();
+            message = response.StatusCode.ToString();
         }
         else 
         {
-            message = await response.Content.ReadAsStringAsync();
+            message = $"{response.StatusCode.ToString()} {await response.Content.ReadAsStringAsync()}";
         }
     } 
 }

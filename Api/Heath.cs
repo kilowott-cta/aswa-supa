@@ -16,7 +16,7 @@ public class Health
         var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
         _ = await _supabaseClient.InitializeAsync();
         _supabaseClient.Auth.ClearStateChangedListeners();
-        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+        var session =  await _supabaseClient.Auth.SetSession(token, token);
         return session.User != null;
     }
 

@@ -15,7 +15,6 @@ public class Health
     private async Task<bool> IsAuthorized(HttpRequest req)
     {
         var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        _ = await _supabaseClient.InitializeAsync();
         _supabaseClient.Auth.ClearStateChangedListeners();
         var session =  await _supabaseClient.Auth.SetSession(token, token);
         return session.User != null;
@@ -31,15 +30,17 @@ public class Health
     public async Task<IActionResult> PingPong([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
     {
         _logger.LogInformation("C# HTTP trigger function processed a request.");
+        _ = await _supabaseClient.InitializeAsync();
+        var url = _supabaseClient.Postgrest.BaseUrl;
         ClaimsPrincipal user = req.HttpContext.User;
         
-        _logger.LogInformation("User: {User}", user.Identity?.Name);
-        return new OkObjectResult("Welcome to Functions!");
+        return new OkObjectResult($"Welcome {user?.Identity?.Name} to Functions with {url}.");
     }
 
     [Function("projects")]
     public async Task<IActionResult> GetProjects([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
+        _ = await _supabaseClient.InitializeAsync();
         if (!await IsAuthorized(req))
         {
             return new UnauthorizedResult();

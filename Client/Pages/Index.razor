@@ -14,8 +14,8 @@ Welcome to your Static Web Apps.
     private string message = string.Empty;
     protected override async Task OnInitializedAsync()
     {
-        var client = HttpClientFactory.CreateClient("ApiClient");
-        var response = await client.GetAsync("/api/pingpong");
+        HttpClient? client = HttpClientFactory.CreateClient("ApiClient");
+        HttpResponseMessage? response = await client.GetAsync("/api/pingpong");
         response.EnsureSuccessStatusCode();
         if (response.IsSuccessStatusCode)
         {

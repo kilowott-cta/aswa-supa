@@ -1,6 +1,7 @@
 
 @page "/dashboard"
 @using Microsoft.AspNetCore.Authorization
+@using DataBasic.Dto
 
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationService AuthService
@@ -8,8 +9,8 @@
 @attribute [Authorize]
 
 <h1>Dashboard</h1>
-<h3>Projects: @projects.Count for @message</h3>
-
+<h3>Projects: @projects.Count </h3>
+<span>@message</span>
     <div>
         <OccurrenceCounts Field="Designers" Projects="projects" />
     </div>
@@ -48,36 +49,43 @@
     protected override async Task OnInitializedAsync()
     {
         var tasks = new List<Task>();
-        tasks.Add(CheckSupabaseHealthAsync());
-        tasks.Add(FetchProjectsAsync());
+        //tasks.Add(CheckSupabaseHealthAsync());
+        //tasks.Add(FetchProjectsAsync());
+        tasks.Add(GetProjectsCountAsync());
         await Task.WhenAll(tasks);
     }
 
-    private async Task FetchProjectsAsync()
+    @* private async Task FetchProjectsAsync()
     {
         HttpClient? client = HttpClientFactory.CreateClient("SupabaseClient");
-        HttpRequestMessage? HttpRequestMessage = new HttpRequestMessage(
+        HttpRequestMessage? request = new HttpRequestMessage(
             HttpMethod.Get, 
             $"{AuthService.SupabaseUrl}/rest/v1/projects");
-        HttpRequestMessage.Headers.Add("apikey", AuthService.SupabaseKey);
-        HttpRequestMessage.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");    
-        HttpResponseMessage? response = await client.SendAsync(HttpRequestMessage);
+        request.Headers.Add("apikey", AuthService.SupabaseKey);
+        request.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");    
+        HttpResponseMessage? response = await client.SendAsync(request);
         if (response.IsSuccessStatusCode)
         {
-            var json = await response.Content.ReadAsStringAsync();
+            string? json = await response.Content.ReadAsStringAsync();
             projects = await response.Content.ReadFromJsonAsync<List<Project>>() ?? new List<Project>();
         }
-    }
+    } *@
 
-    private async Task CheckSupabaseHealthAsync()
+
+    private async Task GetProjectsCountAsync()
     {
-        var client = HttpClientFactory.CreateClient("ApiClient");
-        var response = await client.GetAsync("/api/supabasehealth");
+        HttpClient? client = HttpClientFactory.CreateClient("ApiClient");
+        HttpRequestMessage? request = new HttpRequestMessage(
+            HttpMethod.Get, 
+            "/api/projects");
+        request.Headers.Add("apikey", AuthService.SupabaseKey);
+        request.Headers.Add("Authorization", $"Bearer {AuthService.AccessToken}");
+        HttpResponseMessage? response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
         if (response.IsSuccessStatusCode)
         {
-            message = await response.Content.ReadAsStringAsync();
+            string? json = await response.Content.ReadAsStringAsync();
+            projects = await response.Content.ReadFromJsonAsync<List<Project>>() ?? new List<Project>();
         }
     }
-
 }

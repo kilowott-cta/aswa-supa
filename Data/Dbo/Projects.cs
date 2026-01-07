@@ -1,4 +1,4 @@
-namespace BlazorBasic.Entities;
+namespace DataBasic.Dbo;
 
 using System.Text.Json.Serialization;
 using Supabase.Postgrest.Attributes;
@@ -8,6 +8,7 @@ using Supabase.Postgrest.Models;
 public class Project : BaseModel
 {
     [PrimaryKey(columnName: "id", shouldInsert: false)]
+    [JsonPropertyName(name: "id")]
     public int Id { get; set; }
 
     [Column(columnName: "project_id")]

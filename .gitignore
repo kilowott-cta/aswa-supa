@@ -14,7 +14,7 @@ _repo.*/
 *.lnk
 node_modules/
 local.settings.json
-.vscode/
+
 .user/
 .idea/
 .env

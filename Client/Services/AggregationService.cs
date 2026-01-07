@@ -1,5 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using BlazorBasic.Entities;
+using DataBasic.Dto;
 
 namespace BlazorBasic.Services;
 
@@ -43,7 +42,7 @@ public static class AggregationService
         return items;
     }
 
-    public static int CountNonEmptyField(List<Entities.Project> projects, Func<Entities.Project, string?> fieldSelector)
+    public static int CountNonEmptyField(List<Project> projects, Func<Project, string?> fieldSelector)
     {
         return projects.Count(p => !string.IsNullOrWhiteSpace(fieldSelector(p)));
     }

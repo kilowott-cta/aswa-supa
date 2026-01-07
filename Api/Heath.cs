@@ -1,19 +1,26 @@
 using System.Security.Claims;
-using System.Transactions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using Supabase;
 
-namespace Function.Basic;
+namespace FunctionBasic;
 
 public class Health
 {
     private readonly ILogger<Health> _logger;
-    private readonly Client _supabaseClient;
+    private readonly Supabase.Client _supabaseClient;
 
-    public Health(ILogger<Health> logger, Client supabaseClient)
+    private async Task<bool> IsAuthorized(HttpRequest req)
+    {
+        var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        _ = await _supabaseClient.InitializeAsync();
+        _supabaseClient.Auth.ClearStateChangedListeners();
+        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+        return session.User != null;
+    }
+
+    public Health(ILogger<Health> logger, Supabase.Client supabaseClient)
     {
         _logger = logger;
         _supabaseClient = supabaseClient;
@@ -28,13 +35,36 @@ public class Health
         return new OkObjectResult("Welcome to Functions!");
     }
 
-    [Function("supabasehealth")]
-    public async Task<IActionResult> SupabaseHealth([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
+    [Function("projects")]
+    public async Task<IActionResult> ProjectsCount([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        _logger.LogInformation("Checking Supabase health.");
-        _ = await _supabaseClient.InitializeAsync();
-        var url = _supabaseClient.Postgrest.BaseUrl;
-        var email = _supabaseClient.Auth.CurrentUser?.Email ?? "No user authenticated";
-        return new OkObjectResult($"Supabase client initialized. Current user email: {email}. URL: {url}");
+        if (!await IsAuthorized(req))
+        {
+            return new UnauthorizedResult();
+        }
+        var results = await _supabaseClient
+            .From<DataBasic.Dbo.Project>().Get();
+
+        var projects = results.Models.Select(p => new DataBasic.Dto.Project
+        {
+            ProjectId = p.ProjectId,
+            ProjectName = p.ProjectName,
+            Stage = p.Stage,
+            Status = p.Status,
+            ClientName = p.ClientName,
+            AccountManager = p.AccountManager,
+            Designers= p.Designers,
+            Architects = p.Architects,
+            Analysts = p.Analysts,
+            Tags = p.Tags,
+            SoldHours = p.SoldHours,
+            BallparkHours = p.BallparkHours,
+            Owner = p.Owner,
+            PresalesPriority = p.PresalesPriority,
+            Skillsets = p.Skillsets,
+            UpdatedAt = p.UpdatedAt,
+            CreatedAt = p.CreatedAt
+        });
+        return new OkObjectResult(projects);
     }
 }

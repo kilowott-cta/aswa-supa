@@ -1,3 +1,5 @@
+@using DataBasic.Dto
+
 <strong>@Field</strong>
 <ul>
         @foreach (KeyValuePair<string, int> item in items)
@@ -11,7 +13,7 @@
     [Parameter] public string Field { get; set; } = string.Empty;
     [Parameter] public List<Project> Projects { get; set; } = new List<Project>();
 
-    private Dictionary<string, int> items = new();
+    private Dictionary<string, int> items = new Dictionary<string, int>();
 
     protected override void OnParametersSet()
     {

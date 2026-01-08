@@ -50,10 +50,10 @@
 
     private async Task FetchProjectsAsync()
     {
-        HttpClient? client = HttpClientFactory.CreateClient("SupabaseClient");
+        HttpClient? client = HttpClientFactory.CreateClient(name: "SupabaseClient");
         HttpRequestMessage? request = new HttpRequestMessage(
             HttpMethod.Get, 
-            requestUri: $"{AuthService.SupabaseUrl}/rest/v1/projects");
+            requestUri: $"{AuthService.SupabaseUrl}/functions/v1/get-projects");
         request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
         request.Headers.Add(name: "Authorization", value: $"Bearer {AuthService.AccessToken}");    
         HttpResponseMessage? response = await client.SendAsync(request);

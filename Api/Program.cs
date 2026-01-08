@@ -22,7 +22,7 @@ builder.Services.AddTransient<Client>(sp =>
 {
     var options = new SupabaseOptions
     {
-        AutoConnectRealtime = true,
+        AutoConnectRealtime = true
     };
     return new Client(supabaseUrl, supabaseKey, options);
 });

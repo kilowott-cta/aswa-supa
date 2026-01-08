@@ -43,6 +43,7 @@ public class Health
         _ = await _supabaseClient.InitializeAsync();
         var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
         var session =  await _supabaseClient.Auth.SetSession(token, token);
+        await _supabaseClient.Auth.RefreshSession();
         var results = await _supabaseClient
             .From<DomainBasic.Models.Dbo.Project>().Get();
 

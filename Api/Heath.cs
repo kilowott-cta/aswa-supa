@@ -41,10 +41,8 @@ public class Health
     public async Task<IActionResult> GetProjects([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         _ = await _supabaseClient.InitializeAsync();
-        if (!await IsAuthorized(req))
-        {
-            return new UnauthorizedResult();
-        }
+        var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        var session =  await _supabaseClient.Auth.SetSession(token, token);
         var results = await _supabaseClient
             .From<DomainBasic.Models.Dbo.Project>().Get();
 

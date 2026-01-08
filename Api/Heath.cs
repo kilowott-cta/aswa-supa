@@ -15,8 +15,8 @@ public class Health
     private async Task<bool> IsAuthorized(HttpRequest req)
     {
         var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        _supabaseClient.Auth.ClearStateChangedListeners();
-        var session =  await _supabaseClient.Auth.SetSession(token, token);
+        //_supabaseClient.Auth.ClearStateChangedListeners();
+        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
         return session.User != null;
     }
 

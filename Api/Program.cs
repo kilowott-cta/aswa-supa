@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Supabase;
+using System.Text;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -27,6 +28,8 @@ builder.Services.AddTransient<Client>(sp =>
     return new Client(supabaseUrl, supabaseKey, options);
 });
 
+var bytes = Encoding.UTF8.GetBytes(configuration["JWT_SECRET"] ?? string.Empty);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -38,9 +41,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = "[authenticated]",
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(2),
             ValidateIssuerSigningKey = true,
-            ValidAlgorithms = new[] { SecurityAlgorithms.EcdsaSha256 } // important!
+            ValidAlgorithms = new[] { SecurityAlgorithms.EcdsaSha256 }, // important!
+            IssuerSigningKey = new SymmetricSecurityKey(bytes)
         };
         options.Events = new JwtBearerEvents
         {

@@ -18,7 +18,7 @@ public class Health
     {
         var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
         _supabaseClient.Auth.ClearStateChangedListeners();
-        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+        var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
         return session.User != null;
     }
 
@@ -36,25 +36,31 @@ public class Health
         _ = await _supabaseClient.InitializeAsync();
         var url = _supabaseClient.Postgrest.BaseUrl;
         ClaimsPrincipal user = req.HttpContext.User;
-        
+
         return new OkObjectResult($"Welcome {user?.Identity?.Name} to Functions with {url}.");
     }
 
     [Function("projects")]
     public async Task<IActionResult> GetProjects([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        //_ = await _supabaseClient.InitializeAsync();
-        //_supabaseClient.Auth.ClearStateChangedListeners();
-        var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
-        var user = await _supabaseClient.Auth.GetUser(token);
-        //var session = await _supabaseClient.Auth.GetSessionFromUrl()
+        try
+        {
+            var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+            var user = await _supabaseClient.Auth.GetUser(token);
 
-        var results = await _supabaseClient
-            .From<DomainBasic.Models.Dbo.Project>().Get();
+            var results = await _supabaseClient
+                .From<DomainBasic.Models.Dbo.Project>().Get();
 
-        var projects = results.Models.Select(p => p.ToDto());
+            var projects = results.Models.Select(p => p.ToDto());
 
-        return new OkObjectResult(projects);
+            return new OkObjectResult(projects);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return new BadRequestResult();
+        }
+
     }
 }

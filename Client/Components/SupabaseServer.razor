@@ -52,7 +52,7 @@
             HttpMethod.Get, 
             requestUri: "/api/projects");
         request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
-        request.Headers.Add(name: "Authorization", value: $"Bearer {AuthService.AccessToken}");
+        request.Headers.Add(name: "x-Authorization", value: $"Bearer {AuthService.AccessToken}"); // swa strips Authorization
         HttpResponseMessage? response = await client.SendAsync(request);
         //response.EnsureSuccessStatusCode();
         if (response.IsSuccessStatusCode)

@@ -45,7 +45,7 @@ public class Health
     {
         try
         {
-            var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var token = req.Headers["x-Authorization"].ToString().Replace("Bearer ", "");
             var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
             
             var results = await _supabaseClient

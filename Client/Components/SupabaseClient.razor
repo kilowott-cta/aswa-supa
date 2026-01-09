@@ -10,15 +10,12 @@
     <div>
         <OccurrenceCounts Field="Designers" Projects="projects" />
     </div>
-
     <div>
         <OccurrenceCounts Field="Analysts" Projects="projects" />
     </div>
-
     <div>
         <OccurrenceCounts Field="Architects" Projects="projects" />
     </div>
-
     <div>
         <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
     </div>
@@ -60,15 +57,14 @@
         if (response.IsSuccessStatusCode)
         {
             string? json = await response.Content.ReadAsStringAsync();
-            List<DomainBasic.Models.Dbo.Project>? results 
-                = await response.Content.ReadFromJsonAsync<List<DomainBasic.Models.Dbo.Project>>() 
-                ?? new List<DomainBasic.Models.Dbo.Project>();
-            projects = results.Select(p => p.ToDto()).ToList();
             message = response.StatusCode.ToString();
+            SupabaseResponse? result 
+                = await response.Content.ReadFromJsonAsync<SupabaseResponse>();
+            projects = result?.Data?.Select(p => p.ToDto()).ToList() ?? new List<Project>();         
         }
         else 
         {
-            message = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
+            message = $"{ response.StatusCode.ToString() }. { await response.Content.ReadAsStringAsync() }";
         }
     } 
 }

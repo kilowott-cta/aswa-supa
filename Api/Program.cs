@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Supabase;
-using FunctionBasic;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -18,6 +17,7 @@ builder.Services
 var configuration = builder.Configuration;
 var supabaseUrl = configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"] ?? string.Empty;
 var supabaseKey = configuration["Supabase:Key"] ?? configuration["SUPABASE_KEY"] ?? string.Empty;
+
 builder.Services.AddTransient<Client>(sp =>
 {
     var options = new SupabaseOptions

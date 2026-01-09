@@ -45,10 +45,17 @@ public class Health
     {
         try
         {
+            var pass = _configuration["SUPABASE_PASS"] ?? string.Empty;
             var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
             var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
             var user = await _supabaseClient.Auth.GetUser(token);
-            Console.WriteLine($"token: {token}");
+            if (user is null || string.IsNullOrEmpty(user?.Email))
+            {
+                return new BadRequestResult();
+            }
+            //var session = await _supabaseClient.Auth.RetrieveSessionAsync()
+            session = await _supabaseClient.Auth.SignIn(user.Email, pass);
+            
             var results = await _supabaseClient
                 .From<DomainBasic.Models.Dbo.Project>().Get();
 

@@ -48,7 +48,7 @@ public class Health
             var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
             var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
             var user = await _supabaseClient.Auth.GetUser(token);
-
+            _logger.LogInformation($"token: {token}");
             var results = await _supabaseClient
                 .From<DomainBasic.Models.Dbo.Project>().Get();
 

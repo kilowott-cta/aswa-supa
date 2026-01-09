@@ -14,6 +14,14 @@ public class Health
     private readonly IConfiguration _configuration;
     private readonly Supabase.Client _supabaseClient;
 
+    private async Task<bool> IsAuthorized(HttpRequest req)
+    {
+        var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        _supabaseClient.Auth.ClearStateChangedListeners();
+        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+        return session.User != null;
+    }
+
     public Health(ILogger<Health> logger, IConfiguration configuration, Supabase.Client supabaseClient)
     {
         _logger = logger;
@@ -28,31 +36,25 @@ public class Health
         _ = await _supabaseClient.InitializeAsync();
         var url = _supabaseClient.Postgrest.BaseUrl;
         ClaimsPrincipal user = req.HttpContext.User;
-
+        
         return new OkObjectResult($"Welcome {user?.Identity?.Name} to Functions with {url}.");
     }
 
     [Function("projects")]
     public async Task<IActionResult> GetProjects([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
-        _ = await _supabaseClient.InitializeAsync();
-        _supabaseClient.Auth.ClearStateChangedListeners();
+        //_ = await _supabaseClient.InitializeAsync();
+        //_supabaseClient.Auth.ClearStateChangedListeners();
         var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        try
-        {
-            var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+        var session =  await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+        var user = await _supabaseClient.Auth.GetUser(token);
+        //var session = await _supabaseClient.Auth.GetSessionFromUrl()
 
-            var results = await _supabaseClient
-                .From<DomainBasic.Models.Dbo.Project>().Get();
+        var results = await _supabaseClient
+            .From<DomainBasic.Models.Dbo.Project>().Get();
 
-            var projects = results.Models.Select(p => p.ToDto());
+        var projects = results.Models.Select(p => p.ToDto());
 
-            return new OkObjectResult(projects);
-        }
-        catch (Exception ex)
-        {
-            return new OkObjectResult(ex.Message);
-        }
-
+        return new OkObjectResult(projects);
     }
 }

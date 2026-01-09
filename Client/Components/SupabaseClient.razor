@@ -7,30 +7,30 @@
 <h2>Client</h2>
 <h3>Projects: @projects.Count </h3>
 <span>@message</span>
-    <div>
-        <OccurrenceCounts Field="Designers" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="Analysts" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="Architects" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="ProjectStatus" Projects="projects" />
-    </div>
-    <div>
-        <OccurrenceCounts Field="ProjectStage" Projects="projects" />
-    </div>
-    <div>
-        <NonEmptyCounts Field="BallparkHours" Projects="projects" />
-    </div>
+<div>
+    <OccurrenceCounts Field="Designers" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Analysts" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Architects" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="ProjectStatus" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="ProjectStage" Projects="projects" />
+</div>
+<div>
+    <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+</div>
 <span>Error: @message</span>
 
 
@@ -49,22 +49,27 @@
     {
         HttpClient? client = HttpClientFactory.CreateClient(name: "SupabaseClient");
         HttpRequestMessage? request = new HttpRequestMessage(
-            HttpMethod.Get, 
-            requestUri: $"{AuthService.SupabaseUrl}/functions/v1/get-projects");
+        HttpMethod.Get,
+        requestUri: $"{AuthService.SupabaseUrl}/functions/v1/get-projects");
         request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
-        request.Headers.Add(name: "Authorization", value: $"Bearer {AuthService.AccessToken}");    
+        request.Headers.Add(name: "Authorization", value: $"Bearer {AuthService.AccessToken}");
         HttpResponseMessage? response = await client.SendAsync(request);
         if (response.IsSuccessStatusCode)
         {
             string? json = await response.Content.ReadAsStringAsync();
             message = response.StatusCode.ToString();
-            SupabaseResponse? result 
-                = await response.Content.ReadFromJsonAsync<SupabaseResponse>();
-            projects = result?.Data?.Select(p => p.ToDto()).ToList() ?? new List<Project>();         
+            Response? result
+            = await response.Content.ReadFromJsonAsync<Response>();
+            projects = result?.Data?.Select(p => p.ToDto()).ToList() ?? new List<Project>();
         }
-        else 
+        else
         {
-            message = $"{ response.StatusCode.ToString() }. { await response.Content.ReadAsStringAsync() }";
+            message = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
         }
-    } 
+    }
+
+    public class Response
+    {
+        public List<DomainBasic.Models.Dbo.Project>? Data { get; set; }
+    };
 }

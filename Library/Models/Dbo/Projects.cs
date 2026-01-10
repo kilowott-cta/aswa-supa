@@ -71,4 +71,8 @@ public class Project : BaseModel
     [Column(columnName: "stage")]
     [JsonPropertyName(name: "stage")]
     public string? Stage { get; set; }
+
+    [Column(columnName: "is_latest")]
+    [JsonPropertyName(name: "is_latest")]
+    public bool? IsLatest { get; set; }
 }

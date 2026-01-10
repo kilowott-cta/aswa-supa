@@ -60,7 +60,7 @@
             message = response.StatusCode.ToString();
             Response? result
             = await response.Content.ReadFromJsonAsync<Response>();
-            projects = result?.Data?.Select(p => p.ToDto()).ToList() ?? new List<Project>();
+            projects = result?.Data?.Select(p => p.ToDtoFromDbo()).ToList() ?? new List<Project>();
         }
         else
         {

@@ -21,4 +21,5 @@ public class Project
     public string? PresalesPriority { get; set; }
     public string? Owner { get; set; }
     public string? Stage { get; set; }
+    public bool? IsLatest { get; set; }
 }

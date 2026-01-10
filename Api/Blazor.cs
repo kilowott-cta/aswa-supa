@@ -51,7 +51,7 @@ public class Blazor
             var results = await _supabaseClient
                 .From<DomainBasic.Models.Dbo.Project>().Get();
 
-            var projects = results.Models.Select(p => p.ToDto());
+            var projects = results.Models.Select(p => p.ToDtoFromDbo());
 
             return new OkObjectResult(projects);
         }

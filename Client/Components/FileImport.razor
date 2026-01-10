@@ -1,0 +1,113 @@
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using CsvHelper
+@using CsvHelper.Configuration
+@using DomainBasic.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Globalization
+@using Microsoft.VisualBasic
+@using System.Dynamic
+@using DomainBasic.Models.Dto
+
+<h3>File Import</h3>
+
+<InputFile class="btn" OnChange="@HandleFileSelected" />
+<button @onclick="UploadFile" class="btn btn-primary btn-sm" disabled="@(file == null)">Upload</button>
+
+<h6>Projects: @projects.Count </h6>
+<div>
+    <OccurrenceCounts Field="Designers" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Analysts" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Architects" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="ProjectStatus" Projects="projects" />
+</div>
+<div>
+    <OccurrenceCounts Field="ProjectStage" Projects="projects" />
+</div>
+<div>
+    <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+</div>
+<h6>
+<span>@importMessage</span>
+</h6>
+
+
+
+@code {
+    [Parameter] public EventCallback<List<Project>> FileImported { get; set; }
+    private List<Project> projects = new();
+    private IBrowserFile? file;
+    private string? importMessage;
+    private int maxAllowedSize = 10 * 1024 * 1024; // 10 MB limit
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+        importMessage = string.Empty;
+    }
+
+    private async Task UploadFile()
+    {
+        if (file != null)
+        {
+            try
+            {
+                // Ensure file size is within limits
+                if (file.Size > maxAllowedSize)
+                {
+                    importMessage = "File size is too large. Max size is 10MB.";
+                    return;
+                }
+
+                // Open the file stream on the client
+                using Stream? stream = file.OpenReadStream(maxAllowedSize);
+
+                await ProcessCsv(stream);
+                await FileImported.InvokeAsync(projects);
+            }
+            catch (Exception ex)
+            {
+                importMessage = $"Error: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task ProcessCsv(Stream stream)
+    {
+        try
+        {
+            projects = new();
+            MemoryStream ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+            CsvConfiguration? config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true
+            };
+            using StreamReader? reader = new StreamReader(ms);
+            using CsvReader? csv = new CsvReader(reader, config);
+            List<dynamic>? records = csv.GetRecords<dynamic>().ToList();        
+            foreach (dynamic record in records)
+            {
+                IDictionary<string, object?>? item = (IDictionary<string, object?>)record;
+                projects.Add(item.ToDtoFromDict());
+            }
+        }
+        catch (Exception ex)
+        {
+            importMessage = $"Csv Error {ex.Message}";
+        }
+    }
+}

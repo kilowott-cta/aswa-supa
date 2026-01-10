@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace FunctionBasic;
 
-public class Health
+public class Blazor
 {
-    private readonly ILogger<Health> _logger;
+    private readonly ILogger<Blazor> _logger;
     private readonly IConfiguration _configuration;
     private readonly Supabase.Client _supabaseClient;
 
@@ -22,7 +22,7 @@ public class Health
         return session.User != null;
     }
 
-    public Health(ILogger<Health> logger, IConfiguration configuration, Supabase.Client supabaseClient)
+    public Blazor(ILogger<Blazor> logger, IConfiguration configuration, Supabase.Client supabaseClient)
     {
         _logger = logger;
         _configuration = configuration;
@@ -60,6 +60,31 @@ public class Health
             _logger.LogError(ex.Message);
             return new BadRequestResult();
         }
-
     }
+
+    [Function("uploads")]
+    public async Task<IActionResult> FileUploads([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+    {
+        try
+        {
+            var file = req.Form.Files["File"];
+            if (file == null || file.Length == 0)
+            {
+                return new BadRequestObjectResult("No file uploaded.");
+            }
+            using Stream stream = file.OpenReadStream();
+            await ProcessFile();
+            return new OkObjectResult($"File {file.FileName} uploaded successfully");
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            return new BadRequestObjectResult($"Error: {ex.Message}");
+        }
+    }
+
+    async Task ProcessFile() => await Task.Run(() =>
+    {
+        _logger.LogInformation("Processing file");
+    });
 }

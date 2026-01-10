@@ -41,11 +41,11 @@
     protected override async Task OnInitializedAsync()
     {
         List<Task>? tasks = new List<Task>();
-        tasks.Add(GetProjectsCountAsync());
+        tasks.Add(GetProjectsAsync());
         await Task.WhenAll(tasks);
     }
 
-    private async Task GetProjectsCountAsync()
+    private async Task GetProjectsAsync()
     {
         HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
         HttpRequestMessage? request = new HttpRequestMessage(

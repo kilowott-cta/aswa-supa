@@ -1,11 +1,14 @@
-
 @page "/dashboard"
 @using Microsoft.AspNetCore.Authorization
 
 
 @attribute [Authorize]
 
+<div>
+    <FileUpload />
+</div>
 <div class="d-flex">
+
     <div class="w-50">
         <SupabaseClient />
     </div>
@@ -14,4 +17,3 @@
     </div>
 
 </div>
-

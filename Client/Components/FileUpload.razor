@@ -1,0 +1,138 @@
+@using System.Net.Http
+@using System.Net.Http.Headers
+@using CsvHelper
+@using CsvHelper.Configuration
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Globalization
+@using Microsoft.VisualBasic
+@inject IHttpClientFactory HttpClientFactory
+
+<h3>File Upload</h3>
+
+<InputFile class="btn" OnChange="@HandleFileSelected" />
+<button @onclick="UploadFile" class="btn btn-primary btn-sm" disabled="@(file == null)">Upload</button>
+
+@if (!string.IsNullOrEmpty(uploadMessage))
+{
+    <p>@uploadMessage</p>
+}
+
+@code {
+    private IBrowserFile? file;
+    private string? uploadMessage;
+    private int maxAllowedSize = 10 * 1024 * 1024; // 10 MB limit
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+        uploadMessage = string.Empty;
+    }
+
+    private async Task UploadFile()
+    {
+        if (file != null)
+        {
+            try
+            {
+                // Ensure file size is within limits
+                if (file.Size > maxAllowedSize)
+                {
+                    uploadMessage = "File size is too large. Max size is 10MB.";
+                    return;
+                }
+
+                // Open the file stream on the client
+                using Stream? stream = file.OpenReadStream(maxAllowedSize);
+
+                //await ProcessCsv(stream);
+                
+                HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
+
+                MultipartFormDataContent? content = new MultipartFormDataContent();
+                StreamContent? streamContent = new StreamContent(stream);
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                content.Add(streamContent, name: "file", file.Name); // "file" matches the API controller parameter name
+
+                // Send the file to the server API endpoint
+                HttpResponseMessage? response = await client.PostAsync("api/uploads", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string? message = await response.Content.ReadAsStringAsync();
+                    uploadMessage = $"File {message} uploaded successfully!";
+                }
+                else
+                {
+                    uploadMessage = $"Upload failed: {response.ReasonPhrase}";
+                }
+            }
+            catch (Exception ex)
+            {
+                uploadMessage = $"Error: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task ProcessCsv(Stream stream)
+    {
+        try
+        {
+             MemoryStream ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            CsvConfiguration? config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true
+            };
+            using StreamReader? reader = new StreamReader(ms);
+            using CsvReader? csv = new CsvReader(reader, config);
+
+            List<dynamic>? records = csv.GetRecords<dynamic>().ToList();
+            uploadMessage = records.Count().ToString();
+            //uploadMessage = $"Processing Csv {DateTime.Now.ToLongTimeString()}";
+            foreach (dynamic record in records)
+            {
+                uploadMessage = $"Processing Csv {DateTime.Now.ToLongTimeString()}";
+
+                uploadMessage += $"Project: {record}";
+                Console.WriteLine($"Project: {record.Name} {record.Analysts}");
+                //StateHasChanged();
+                //break;
+            }
+        }
+        catch (Exception ex)
+        {
+            uploadMessage = $"Csv Error {ex.Message}";
+        }
+
+    }
+
+    /// <summary>
+    /// Create multipart form data to send the file to the API
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns></returns>
+    private async Task UploadApi(Stream stream, IBrowserFile file)
+    {
+        MemoryStream ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
+
+        MultipartFormDataContent? content = new MultipartFormDataContent();
+        StreamContent? streamContent = new StreamContent(ms);
+        streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+        content.Add(streamContent, name: "file", file.Name); // "file" matches the API controller parameter name
+
+        // Send the file to the server API endpoint
+        HttpResponseMessage? response = await client.PostAsync("api/uploads", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            string? message = await response.Content.ReadAsStringAsync();
+            uploadMessage = $"File {message} uploaded successfully!";
+        }
+        else
+        {
+            uploadMessage = $"Upload failed: {response.ReasonPhrase}";
+        }
+    }
+}

@@ -110,7 +110,7 @@
         HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
         HttpRequestMessage? request = new HttpRequestMessage(
         HttpMethod.Get,
-        requestUri: "/api/projects");
+        requestUri: "/api/get-projects");
         request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
         request.Headers.Add(name: "x-Authorization", value: $"Bearer {AuthService.AccessToken}"); // swa strips Authorization
         HttpResponseMessage? response = await client.SendAsync(request);
@@ -120,6 +120,28 @@
             dbProjects = await response.Content.ReadFromJsonAsync<List<Project>>()
             ?? new List<Project>();
             message = response.StatusCode.ToString();
+        }
+        else
+        {
+            message = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
+        }
+    }
+
+    private async Task PostProjectsAsync()
+    {
+        //HttpRequestMessage? request = new HttpRequestMessage(
+        //HttpMethod.Post,
+        //requestUri: "/api/post-projects"); 
+        //request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
+        //request.Headers.Add(name: "x-Authorization", value: $"Bearer {AuthService.AccessToken}"); // swa strips Authorization
+        HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
+        client.DefaultRequestHeaders.Add("apiKey", AuthService.SupabaseKey);
+        client.DefaultRequestHeaders.Add(name: "x-Authorization", AuthService.AccessToken);
+        HttpResponseMessage? response = await client.PostAsJsonAsync("/api/post-projects", dbProjects);
+        if (response.IsSuccessStatusCode)
+        {
+            string? json = await response.Content.ReadAsStringAsync();
+            message = json + " : " + response.StatusCode.ToString();
         }
         else
         {

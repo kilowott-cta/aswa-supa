@@ -8,13 +8,16 @@
 @using Microsoft.VisualBasic
 @using System.Dynamic
 @using DomainBasic.Models.Dto
+@inject IHttpClientFactory HttpClientFactory
+@inject AuthenticationService AuthService
 
 <h3>File Import</h3>
 
 <InputFile class="btn" OnChange="@HandleFileSelected" />
-<button @onclick="UploadFile" class="btn btn-primary btn-sm" disabled="@(file == null)">Upload</button>
+<button @onclick="ProcessFilesAsync" class="btn btn-primary btn-sm" disabled="@(file == null)">Process</button>
+<button @onclick="PostProjectsAsync" class="btn btn-secondary btn-sm" disable="@(projects is null)">Post</button>
 
-<h6>Projects: @projects.Count </h6>
+<h6>Projects: @projects?.Count </h6>
 <div>
     <OccurrenceCounts Field="Designers" Projects="projects" />
 </div>
@@ -40,16 +43,18 @@
     <NonEmptyCounts Field="BallparkHours" Projects="projects" />
 </div>
 <h6>
-<span>@importMessage</span>
+<div>@importMessage</div>
+<div>@postMessage</div>
 </h6>
 
 
 
 @code {
     [Parameter] public EventCallback<List<Project>> FileImported { get; set; }
-    private List<Project> projects = new();
+    private List<Project> projects = new List<Project>();
     private IBrowserFile? file;
     private string? importMessage;
+    private string? postMessage;
     private int maxAllowedSize = 10 * 1024 * 1024; // 10 MB limit
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
@@ -58,7 +63,7 @@
         importMessage = string.Empty;
     }
 
-    private async Task UploadFile()
+    private async Task ProcessFilesAsync()
     {
         if (file != null)
         {
@@ -88,7 +93,7 @@
     {
         try
         {
-            projects = new();
+            projects = new List<Project>();
             MemoryStream ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             ms.Seek(0, SeekOrigin.Begin);
@@ -108,6 +113,23 @@
         catch (Exception ex)
         {
             importMessage = $"Csv Error {ex.Message}";
+        }
+    }
+
+    private async Task PostProjectsAsync()
+    {
+        HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
+        client.DefaultRequestHeaders.Add("apiKey", AuthService.SupabaseKey);
+        client.DefaultRequestHeaders.Add(name: "x-Authorization", AuthService.AccessToken);
+        HttpResponseMessage? response = await client.PostAsJsonAsync("/api/post-projects", projects);
+        if (response.IsSuccessStatusCode)
+        {
+            string? json = await response.Content.ReadAsStringAsync();
+            postMessage = json + " : " + response.StatusCode.ToString();
+        }
+        else
+        {
+            postMessage = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
         }
     }
 }

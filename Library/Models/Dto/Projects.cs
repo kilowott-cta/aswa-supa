@@ -3,7 +3,6 @@ namespace DomainBasic.Models.Dto;
 
 public class Project
 {
-    public int Id { get; set; }
     public string? ProjectId { get; set; }
     public string? ProjectName { get; set; }
     public DateTime CreatedAt { get; set; }

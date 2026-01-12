@@ -7,11 +7,7 @@ using Supabase.Postgrest.Models;
 [Table(tableName: "projects")]
 public class Project : BaseModel
 {
-    [PrimaryKey(columnName: "id", shouldInsert: false)]
-    [JsonPropertyName(name: "id")]
-    public int Id { get; set; }
-
-    [Column(columnName: "project_id")]
+    [PrimaryKey(columnName: "project_id", shouldInsert: true)]
     [JsonPropertyName(name: "project_id")]
     public string? ProjectId { get; set; }
 

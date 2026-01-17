@@ -69,7 +69,7 @@ public static class Mapper
             BallparkHours = p["BALLPARK HOURS 2.0"]?.ToString(),
             Owner = p["OWNER"]?.ToString(),
             PresalesPriority = p["PRESALES PRIORITY"]?.ToString(),
-            Skillsets = p["SKILLSET"]?.ToString()
+            Skillsets = p["SKILLSETS"]?.ToString()
         };
     }
 }

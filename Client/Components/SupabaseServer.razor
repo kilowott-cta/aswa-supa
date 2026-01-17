@@ -4,20 +4,25 @@
 @inject AuthenticationService AuthService
 
 <h2>Server</h2>
-<h6>DB Projects: @dbProjects.Count </h6>
-<h6>CSV Projects: @csvProjects.Count</h6>
-<h6>Delta Projects: @diffProjects.Count</h6>
-<h6>New Projects: @newProjects.Count</h6>
+<h6>Projects: @projects.Count </h6>
 
-<FileImport FileImported="OnFileImported" />
+<div class="d-flex flex-wrap">
+    <div class="mx-auto"><OccurrenceCounts Field="Designers" Projects="projects" /></div>
+    <div class="mx-auto"><OccurrenceCounts Field="Analysts" Projects="projects" /></div>
+    <div class="mx-auto"><OccurrenceCounts Field="Architects" Projects="projects" /></div>
+    <div class="mx-auto"><OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" /></div>
+    <div class="mx-auto"><OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" /></div>
+    <div class="mx-auto"><OccurrenceCounts Field="ProjectStatus" Projects="projects" /></div>
+    <div class="mx-auto"><OccurrenceCounts Field="ProjectStage" Projects="projects" /></div>
+</div>
 
+<div>
+    <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+</div>
 <span>Error: @message</span>
 
 @code {
-    private List<Project> dbProjects = new List<Project>();
-    private List<Project> csvProjects = new List<Project>();
-    private List<Project> diffProjects = new List<Project>();
-    private List<Project> newProjects= new List<Project>();
+    private List<Project> projects = new List<Project>();
 
     private string message = string.Empty;
 
@@ -28,83 +33,7 @@
         await Task.WhenAll(tasks);
     }
 
-    private void OnFileImported(List<Project> projects)
-    {
-        csvProjects = projects;
-        diffProjects = new List<Project>();
-        newProjects = new List<Project>();
-        List<string?>? dbProjectIds = dbProjects
-                                            .Select(p => p.ProjectId)
-                                            .ToList();
-        foreach(Project csvProject in csvProjects)
-        {
-            if (!dbProjectIds.Contains(csvProject.ProjectId)) 
-            {
-                newProjects.Add(csvProject);
-                break;
-            }
-            foreach(Project dbProject in dbProjects)
-            {
-                // opportunistic algo - break at first mismatch to spare time
-                if (string.CompareOrdinal(dbProject.Analysts, csvProject.Analysts) != 0) 
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Designers, csvProject.Designers) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Architects, csvProject.Architects) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.AccountManager, csvProject.AccountManager) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.BallparkHours, csvProject.BallparkHours) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.ClientName, csvProject.ClientName) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Owner, csvProject.Owner) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.PresalesPriority, csvProject.PresalesPriority) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.ProjectName, csvProject.ProjectName) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Skillsets, csvProject.Skillsets) != 0) 
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.SoldHours, csvProject.SoldHours) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Stage, csvProject.Stage) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Status, csvProject.Status) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-                if (string.CompareOrdinal(dbProject.Tags, csvProject.Tags) != 0)
-                {
-                    diffProjects.Add(csvProject); break;
-                }
-            }
-        }
-    }
+
     private async Task GetProjectsAsync()
     {
         HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
@@ -117,7 +46,7 @@
         if (response.IsSuccessStatusCode)
         {
             string? json = await response.Content.ReadAsStringAsync();
-            dbProjects = await response.Content.ReadFromJsonAsync<List<Project>>()
+            projects = await response.Content.ReadFromJsonAsync<List<Project>>()
             ?? new List<Project>();
             message = response.StatusCode.ToString();
         }
@@ -126,28 +55,4 @@
             message = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
         }
     }
-
-    private async Task PostProjectsAsync()
-    {
-        //HttpRequestMessage? request = new HttpRequestMessage(
-        //HttpMethod.Post,
-        //requestUri: "/api/post-projects"); 
-        //request.Headers.Add(name: "apikey", AuthService.SupabaseKey);
-        //request.Headers.Add(name: "x-Authorization", value: $"Bearer {AuthService.AccessToken}"); // swa strips Authorization
-        HttpClient? client = HttpClientFactory.CreateClient(name: "ApiClient");
-        client.DefaultRequestHeaders.Add("apiKey", AuthService.SupabaseKey);
-        client.DefaultRequestHeaders.Add(name: "x-Authorization", AuthService.AccessToken);
-        HttpResponseMessage? response = await client.PostAsJsonAsync("/api/post-projects", dbProjects);
-        if (response.IsSuccessStatusCode)
-        {
-            string? json = await response.Content.ReadAsStringAsync();
-            message = json + " : " + response.StatusCode.ToString();
-        }
-        else
-        {
-            message = $"{response.StatusCode.ToString()}. {await response.Content.ReadAsStringAsync()}";
-        }
-    }
-
-
 }

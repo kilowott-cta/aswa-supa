@@ -7,17 +7,19 @@
 <h6>Projects: @projects.Count </h6>
 
 <div class="d-flex flex-wrap">
-    <div class="mx-auto"><OccurrenceCounts Field="Designers" Projects="projects" /></div>
-    <div class="mx-auto"><OccurrenceCounts Field="Analysts" Projects="projects" /></div>
-    <div class="mx-auto"><OccurrenceCounts Field="Architects" Projects="projects" /></div>
-    <div class="mx-auto"><OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" /></div>
-    <div class="mx-auto"><OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" /></div>
-    <div class="mx-auto"><OccurrenceCounts Field="ProjectStatus" Projects="projects" /></div>
-    <div class="mx-auto"><OccurrenceCounts Field="ProjectStage" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="Designers" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="Analysts" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="Architects" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="Tags" MaxItems="5" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="Skills" MaxItems="5" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="ProjectStatus" Projects="projects" /></div>
+    <div class="card mb-3"><OccurrenceCounts Field="ProjectStage" Projects="projects" /></div>
 </div>
 
 <div>
-    <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+    <div class="card mb-3">
+        <NonEmptyCounts Field="BallparkHours" Projects="projects" />
+    </div>
 </div>
 <span>Error: @message</span>
 

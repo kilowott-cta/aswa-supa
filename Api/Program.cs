@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Supabase;
 using System.Text;
 
+
 var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
@@ -28,8 +29,8 @@ builder.Services.AddTransient<Client>(sp =>
     return new Client(supabaseUrl, supabaseKey, options);
 });
 
-var bytes = Encoding.UTF8.GetBytes(configuration["JWT_SECRET"] ?? string.Empty);
 
+var bytes = Encoding.UTF8.GetBytes(configuration["JWT_SECRET"] ?? string.Empty);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -62,5 +63,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     );
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddHttpClient("OpenAI", client =>
+{
+    client.BaseAddress = new Uri("https://api.openai.com/v1/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 builder.Build().Run();

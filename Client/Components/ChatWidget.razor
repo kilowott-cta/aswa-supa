@@ -1,0 +1,171 @@
+@inject BlazorBasic.Services.ChatService ChatService
+@inject IJSRuntime JS
+@using DomainBasic.Models.Dto
+
+<div class="chat-widget @(_isExpanded ? "expanded" : "")">
+    @if (_isExpanded)
+    {
+        <div class="chat-header">
+            <h4>AI Assistant</h4>
+            <button class="btn-minimize" @onclick="ToggleExpand">−</button>
+        </div>
+        
+        <div class="chat-messages" @ref="_messagesContainer">
+            @if (!_messages.Any())
+            {
+                <div class="welcome-message">
+                    <p>👋 Hi! I'm your AI assistant. How can I help you today?</p>
+                </div>
+            }
+            
+            @foreach (var message in _messages)
+            {
+                <div class="chat-message @message.Role">
+                    <div class="message-bubble">
+                        <div class="message-content">@message.Content</div>
+                        <div class="message-time">@message.Timestamp.ToString("HH:mm")</div>
+                    </div>
+                </div>
+            }
+            
+            @if (_isLoading)
+            {
+                <div class="chat-message assistant">
+                    <div class="message-bubble">
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="chat-input">
+            <input type="text" 
+                   @bind="_currentMessage" 
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown"
+                   placeholder="Type a message..."
+                   disabled="@_isLoading"
+                   class="message-input" />
+            <button @onclick="SendMessage" 
+                    disabled="@(_isLoading || string.IsNullOrWhiteSpace(_currentMessage))"
+                    class="btn-send">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    }
+    else
+    {
+        <button class="chat-bubble-button" @onclick="ToggleExpand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            @if (_unreadCount > 0)
+            {
+                <span class="unread-badge">@_unreadCount</span>
+            }
+        </button>
+    }
+</div>
+
+@code {
+    private List<ChatMessage> _messages = new();
+    private string _currentMessage = string.Empty;
+    private string? _conversationId;
+    private bool _isLoading = false;
+    private bool _isExpanded = false;
+    private int _unreadCount = 0;
+    private ElementReference _messagesContainer;
+
+    private void ToggleExpand()
+    {
+        _isExpanded = !_isExpanded;
+        if (_isExpanded)
+        {
+            _unreadCount = 0;
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_currentMessage)) return;
+
+        var userMessage = _currentMessage;
+        _currentMessage = string.Empty;
+
+        // Add user message - using userId as partition key for isolation
+        _messages.Add(new ChatMessage
+        {
+            Role = "user",
+            Content = userMessage,
+            Timestamp = DateTime.UtcNow,
+            ConversationId = _conversationId ?? string.Empty
+        });
+
+        _isLoading = true;
+        await ScrollToBottom();
+        StateHasChanged();
+
+        try
+        {
+            ChatResponse? response = await ChatService.SendMessageAsync(userMessage, _conversationId);
+            
+            if (response != null)
+            {
+                _conversationId = response.ConversationId;
+                
+                _messages.Add(item: new ChatMessage
+                {
+                    Role = "assistant",
+                    Content = response.Message,
+                    Timestamp = DateTime.UtcNow,
+                    ConversationId = _conversationId ?? string.Empty
+                });
+
+                if (!_isExpanded)
+                {
+                    _unreadCount++;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage
+            {
+                Role = "assistant",
+                Content = "Sorry, I encountered an error. Please try again.",
+                Timestamp = DateTime.UtcNow
+            });
+            
+            // Log diagnostic information
+            Console.WriteLine($"Chat error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+            await ScrollToBottom();
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey && !_isLoading)
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("scrollToBottom", _messagesContainer);
+        }
+        catch { /* Ignore if JS not available */ }
+    }
+}

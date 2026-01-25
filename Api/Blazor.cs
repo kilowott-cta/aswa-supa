@@ -14,7 +14,7 @@ public class Blazor
     private readonly ILogger<Blazor> _logger;
     private readonly IConfiguration _configuration;
     private readonly Supabase.Client _supabaseClient;
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
     {
         PropertyNameCaseInsensitive = true
@@ -25,7 +25,7 @@ public class Blazor
         _logger = logger;
         _configuration = configuration;
         _supabaseClient = supabaseClient;
-        _httpClient = httpClientFactory.CreateClient("OpenAI");
+        _httpClientFactory = httpClientFactory;
     }
 
     [Function("pingpong")]
@@ -178,6 +178,7 @@ public class Blazor
                 messages 
             };
 
+            var client = _httpClientFactory.CreateClient("OpenAI");
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, 
                 "https://api.openai.com/v1/chat/completions")
             {
@@ -188,7 +189,7 @@ public class Blazor
             requestMessage.Headers.Remove("Authorization");
             requestMessage.Headers.Add("Authorization", $"Bearer {openAiKey}");
 
-            var response = await _httpClient.SendAsync(requestMessage);
+            var response = await client.SendAsync(requestMessage);
             
             if (!response.IsSuccessStatusCode)
             {

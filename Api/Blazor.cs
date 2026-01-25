@@ -185,6 +185,7 @@ public class Blazor
                     System.Text.Encoding.UTF8, 
                     "application/json")
             };
+            requestMessage.Headers.Remove("Authorization");
             requestMessage.Headers.Add("Authorization", $"Bearer {openAiKey}");
 
             var response = await _httpClient.SendAsync(requestMessage);

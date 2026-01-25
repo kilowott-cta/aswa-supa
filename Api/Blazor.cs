@@ -14,24 +14,18 @@ public class Blazor
     private readonly ILogger<Blazor> _logger;
     private readonly IConfiguration _configuration;
     private readonly Supabase.Client _supabaseClient;
+    private readonly HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
     {
-        PropertyNameCaseInsensitive= true
+        PropertyNameCaseInsensitive = true
     };
 
-    private async Task<bool> IsAuthorized(HttpRequest req)
-    {
-        var token = req.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        _supabaseClient.Auth.ClearStateChangedListeners();
-        var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
-        return session.User != null;
-    }
-
-    public Blazor(ILogger<Blazor> logger, IConfiguration configuration, Supabase.Client supabaseClient)
+    public Blazor(ILogger<Blazor> logger, IConfiguration configuration, Supabase.Client supabaseClient, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _configuration = configuration;
         _supabaseClient = supabaseClient;
+        _httpClient = httpClientFactory.CreateClient("OpenAI");
     }
 
     [Function("pingpong")]
@@ -119,4 +113,122 @@ public class Blazor
     {
         _logger.LogInformation("Processing file");
     });
+
+    [Function("chat")]
+    public async Task<IActionResult> Chat([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+    {
+        try
+        {
+            var token = req.Headers["x-Authorization"].ToString().Replace("Bearer ", "");
+            var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+            
+            if (session.User == null)
+            {
+                return new UnauthorizedResult();
+            }
+
+            using var reader = new StreamReader(req.Body);
+            var requestBody = await reader.ReadToEndAsync();
+            var chatRequest = JsonSerializer.Deserialize<DomainBasic.Models.Dto.ChatRequest>(requestBody, _jsonSerializerOptions);
+
+            if (string.IsNullOrWhiteSpace(chatRequest?.Query))
+            {
+                return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
+                { 
+                    Success = false, 
+                    Error = "Query cannot be empty" 
+                });
+            }
+
+            var openAiKey = _configuration["OPENAI_API_KEY"];
+            if (string.IsNullOrEmpty(openAiKey))
+            {
+                return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
+                { 
+                    Success = false, 
+                    Error = "OpenAI API key not configured" 
+                });
+            }
+
+            var model = _configuration["OPENAI_MODEL"] ?? "gpt-4o-mini";
+            var messages = new[] 
+            {
+                new { role = "system", content = "You are a helpful assistant." },
+                new { role = "user", content = chatRequest.Query }
+                
+            }.ToList();
+
+            // Add conversation history
+            if (chatRequest.ConversationHistory != null)
+            {
+                foreach (var msg in chatRequest.ConversationHistory)
+                {
+                    messages.Add(new { role = msg.Role.ToLower(), content = msg.Content });
+                    _logger.LogInformation($"Added message to history: {msg.Role} - {msg.Content}"); 
+                }
+            }
+            
+            // Build OpenAI API request
+            var openAIRequest = new
+            {
+                model,
+                max_tokens = 500,
+                temperature = 0.7,  
+                user = chatRequest.ConversationId, // Track usage per conversation
+                messages 
+            };
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, 
+                "https://api.openai.com/v1/chat/completions")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(openAIRequest), 
+                    System.Text.Encoding.UTF8, 
+                    "application/json")
+            };
+            requestMessage.Headers.Add("Authorization", $"Bearer {openAiKey}");
+
+            var response = await _httpClient.SendAsync(requestMessage);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"OpenAI API error: {errorContent}");
+                return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
+                { 
+                    Success = false, 
+                    Error = $"OpenAI API error: {response.StatusCode}" 
+                });
+            }
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var openAiResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            
+            var assistantResponse = openAiResponse
+                .GetProperty("choices")[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString() ?? string.Empty;
+
+            // Build updated conversation history
+            var updatedHistory = chatRequest.ConversationHistory ?? new List<DomainBasic.Models.Dto.ChatMessage>();
+            updatedHistory.Add(new DomainBasic.Models.Dto.ChatMessage { Role = "user", Content = chatRequest.Query });
+            updatedHistory.Add(new DomainBasic.Models.Dto.ChatMessage { Role = "assistant", Content = assistantResponse });
+
+            return new OkObjectResult(new DomainBasic.Models.Dto.ChatResponse
+            {
+                Message = assistantResponse,
+                ConversationHistory = updatedHistory,
+                Success = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in chat function");
+            return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
+            { 
+                Success = false, 
+                Error = ex.Message 
+            });
+        }
+    }
 }

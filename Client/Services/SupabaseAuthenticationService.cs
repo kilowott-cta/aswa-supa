@@ -11,7 +11,7 @@ public class SupabaseSession
     public string? Email { get; set; } = string.Empty;
 }
 
-public class AuthenticationService
+public class SupabaseAuthenticationService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IJSRuntime _jsRuntime;
@@ -21,7 +21,7 @@ public class AuthenticationService
     private SupabaseSession? _session;
     public event Action? OnAuthStateChanged;
 
-    public AuthenticationService(
+    public SupabaseAuthenticationService(
         IHttpClientFactory httpClientFactory,
         IJSRuntime jsRuntime,
         IConfiguration configuration,

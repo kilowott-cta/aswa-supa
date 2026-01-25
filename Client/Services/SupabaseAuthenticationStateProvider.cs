@@ -6,9 +6,9 @@ namespace BlazorBasic.Services;
 
 public class SupabaseAuthenticationStateProvider : AuthenticationStateProvider
 {
-    private readonly AuthenticationService _authenticationService;
+    private readonly SupabaseAuthenticationService _authenticationService;
 
-    public SupabaseAuthenticationStateProvider(AuthenticationService authenticationService)
+    public SupabaseAuthenticationStateProvider(SupabaseAuthenticationService authenticationService)
     {
         _authenticationService = authenticationService;
         _authenticationService.OnAuthStateChanged += Notify;

@@ -15,7 +15,7 @@ var supabaseUrl = configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"]
 var supabaseKey = configuration["Supabase:Key"] ?? configuration["SUPABASE_KEY"] ?? string.Empty;
 
 builder.Services.AddAuthorizationCore();
-builder.Services.AddScoped<AuthenticationService>();
+builder.Services.AddScoped<SupabaseAuthenticationService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SupabaseAuthenticationStateProvider>();
 
 var options = new Supabase.SupabaseOptions
@@ -45,6 +45,6 @@ builder.Services.AddHttpClient("ApiClient", client =>
 });
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
+builder.Services.AddScoped<BlazorBasic.Services.ChatService>();
 
 await builder.Build().RunAsync();

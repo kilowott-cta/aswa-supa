@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using DomainBasic.Models;
@@ -20,6 +21,7 @@ public class Blazor
         PropertyNameCaseInsensitive = true
     };
     private readonly string? _openAiKey;
+    private static readonly HttpClient httpClient = new HttpClient();
 
     public Blazor(ILogger<Blazor> logger, IConfiguration configuration, Supabase.Client supabaseClient, IHttpClientFactory httpClientFactory)
     {
@@ -197,7 +199,7 @@ public class Blazor
                 return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
                 { 
                     Success = false, 
-                    Error = $"OpenAI API error: {response.StatusCode} : {response.StatusCode} : {response.ReasonPhrase}" 
+                    Error = $"OpenAI API error: {response.StatusCode} : {response.ReasonPhrase}" 
                 });
             }
 
@@ -230,6 +232,41 @@ public class Blazor
                 Success = false, 
                 Error = ex.Message 
             });
+        }
+    }
+
+    [Function("test-openai")]
+    public static async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+        ILogger log)
+    {
+        string apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return new BadRequestObjectResult("❌ Missing OPENAI_API_KEY environment variable");
+        }
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.openai.com/v1/models");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var response = await httpClient.SendAsync(request);
+            string body = await response.Content.ReadAsStringAsync();
+
+            return new OkObjectResult(new
+            {
+                status = (int)response.StatusCode,
+                ok = response.IsSuccessStatusCode,
+                body
+            });
+        }
+        catch (Exception ex)
+        {
+            log.LogError(ex, "Error calling OpenAI API");
+            return new ObjectResult($"❌ Error: {ex.Message}") { StatusCode = 500 };
         }
     }
 }

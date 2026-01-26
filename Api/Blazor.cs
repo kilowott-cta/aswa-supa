@@ -38,7 +38,7 @@ public class Blazor
         var url = _supabaseClient.Postgrest.BaseUrl;
         ClaimsPrincipal user = req.HttpContext.User;
 
-        return new OkObjectResult($"Welcome {user?.Identity?.Name} to Functions with {url}.");
+        return new OkObjectResult($"Welcome {user?.Identity?.Name} to Functions with {url}. {_openAiKey?.Substring(0, 5)}...");
     }
 
     [Function("get-projects")]

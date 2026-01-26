@@ -1,0 +1,184 @@
+@using System.Text.Json
+@inject IHttpClientFactory HttpClientFactory
+@inject SupabaseAuthenticationService AuthService
+
+<div class="mcp-health-check">
+    <h3>🔒 MCP Authenticated Health Check</h3>
+    <p class="description">Test the authenticated MCP health endpoint</p>
+    
+    <button @onclick="CheckHealth" class="btn btn-success" disabled="@_isLoading">
+        @if (_isLoading)
+        {
+            <span>⏳ Checking...</span>
+        }
+        else
+        {
+            <span>🔍 Check Health</span>
+        }
+    </button>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">
+            <strong>❌ Error:</strong> @_errorMessage
+        </div>
+    }
+
+    @if (_healthResponse != null)
+    {
+        <div class="health-results">
+            <div class="status-badge @(_healthResponse.Success ? "success" : "error")">
+                @(_healthResponse.Success ? "✅ Success" : "❌ Failed")
+            </div>
+            
+            @if (_healthResponse.Authenticated)
+            {
+                <div class="info-section">
+                    <h4>👤 User Information</h4>
+                    <div class="info-row">
+                        <span class="label">Email:</span>
+                        <span class="value">@_healthResponse.User?.Email</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">User ID:</span>
+                        <span class="value code">@_healthResponse.User?.Id</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4>🔌 Supabase Connection</h4>
+                    <div class="info-row">
+                        <span class="label">Status:</span>
+                        <span class="value">@(_healthResponse.Supabase?.Connected == true ? "✅ Connected" : "❌ Disconnected")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">URL:</span>
+                        <span class="value code">@_healthResponse.Supabase?.Url</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h4>⏰ Timestamp</h4>
+                    <div class="info-row">
+                        <span class="value">@_healthResponse.Timestamp.ToString("yyyy-MM-dd HH:mm:ss UTC")</span>
+                    </div>
+                </div>
+
+                <div class="message-box success">
+                    @_healthResponse.Message
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(_healthResponse.Error))
+            {
+                <div class="message-box error">
+                    @_healthResponse.Error
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_rawResponse))
+    {
+        <details class="raw-response">
+            <summary>📄 Raw MCP Response</summary>
+            <pre>@_rawResponse</pre>
+        </details>
+    }
+</div>
+
+@code {
+    private bool _isLoading = false;
+    private string _errorMessage = string.Empty;
+    private string _rawResponse = string.Empty;
+    private HealthResponse? _healthResponse;
+
+    private async Task CheckHealth()
+    {
+        _isLoading = true;
+        _errorMessage = string.Empty;
+        _rawResponse = string.Empty;
+        _healthResponse = null;
+
+        try
+        {
+            var requestBody = new
+            {
+                prompt = "Perform an authenticated health check and return the result as JSON.",
+                max_tokens = 1000,
+                temperature = 0.0,
+                top_p = 1.0,
+                n = 1,
+                stop = (string?)null
+            };
+
+            HttpClient? client = HttpClientFactory.CreateClient("ApiClient");
+            client.DefaultRequestHeaders.Add("apikey", AuthService.SupabaseKey);
+            
+            HttpResponseMessage? response = await client.PostAsJsonAsync("/api/mcp", requestBody);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                string? jsonResponse = await response.Content.ReadAsStringAsync();
+                _rawResponse = jsonResponse;
+                
+                McpResponse? mcpResult = JsonSerializer.Deserialize<McpResponse>(jsonResponse, 
+                    options: new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                if (mcpResult?.Content?.Any() == true)
+                {
+                    string? textContent = mcpResult.Content[0].Text;
+                    _healthResponse = JsonSerializer.Deserialize<HealthResponse>(textContent,
+                        options: new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+            }
+            else
+            {
+                _errorMessage = $"HTTP {response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Exception: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // Response Models
+    private class McpResponse
+    {
+        public List<McpContent>? Content { get; set; }
+        public bool IsError { get; set; }
+    }
+
+    private class McpContent
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
+    private class HealthResponse
+    {
+        public bool Success { get; set; }
+        public bool Authenticated { get; set; }
+        public UserInfo? User { get; set; }
+        public SupabaseInfo? Supabase { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? Error { get; set; }
+    }
+
+    private class UserInfo
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+    }
+
+    private class SupabaseInfo
+    {
+        public bool Connected { get; set; }
+        public string Url { get; set; } = string.Empty;
+    }
+}

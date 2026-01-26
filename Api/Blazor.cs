@@ -19,6 +19,7 @@ public class Blazor
     {
         PropertyNameCaseInsensitive = true
     };
+    private readonly string? _openAiKey;
 
     public Blazor(ILogger<Blazor> logger, IConfiguration configuration, Supabase.Client supabaseClient, IHttpClientFactory httpClientFactory)
     {
@@ -26,6 +27,7 @@ public class Blazor
         _configuration = configuration;
         _supabaseClient = supabaseClient;
         _httpClientFactory = httpClientFactory;
+        _openAiKey = _configuration["OPENAI_API_KEY"];
     }
 
     [Function("pingpong")]
@@ -119,8 +121,6 @@ public class Blazor
     {
         try
         {
-            var openAiKey = _configuration["OPENAI_API_KEY"];
-            
             var token = req.Headers["x-Authorization"].ToString().Replace("Bearer ", "");
             var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
             
@@ -142,7 +142,7 @@ public class Blazor
                 });
             }
 
-            if (string.IsNullOrEmpty(openAiKey))
+            if (string.IsNullOrEmpty(_openAiKey))
             {
                 return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
                 { 
@@ -187,7 +187,7 @@ public class Blazor
                     System.Text.Encoding.UTF8, 
                     "application/json")
             };
-            requestMessage.Headers.Add("Authorization", $"Bearer {openAiKey}");
+            requestMessage.Headers.Add("Authorization", $"Bearer {_openAiKey}");
 
             var response = await client.SendAsync(requestMessage);
             

@@ -165,7 +165,6 @@ public class Blazor
                 foreach (var msg in chatRequest.ConversationHistory)
                 {
                     messages.Add(new { role = msg.Role.ToLower(), content = msg.Content });
-                    _logger.LogInformation($"Added message to history: {msg.Role} - {msg.Content}"); 
                 }
             }
             
@@ -194,7 +193,7 @@ public class Blazor
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"OpenAI API error: {errorContent}");
+                _logger.LogError($"OpenAI API error: {errorContent}: {response.StatusCode} : {response.ReasonPhrase} ");
                 return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
                 { 
                     Success = false, 

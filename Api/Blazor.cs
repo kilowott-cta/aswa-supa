@@ -193,11 +193,11 @@ public class Blazor
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"OpenAI API error: {errorContent}: {response.StatusCode} : {response.ReasonPhrase} ");
+                _logger.LogError($"OpenAI API error: {errorContent}");
                 return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
                 { 
                     Success = false, 
-                    Error = $"OpenAI API error: {response.StatusCode}" 
+                    Error = $"OpenAI API error: {response.StatusCode} : {response.StatusCode} : {response.ReasonPhrase}" 
                 });
             }
 

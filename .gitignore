@@ -6,6 +6,7 @@ _site/
 _themes*/
 _repo.*/
 .vs/
+.vscode
 
 .idea
 .ionide/
@@ -19,3 +20,5 @@ local.settings.json
 .idea/
 .env
 swa-cli.config.json
+
+

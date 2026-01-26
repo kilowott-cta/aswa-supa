@@ -119,6 +119,8 @@ public class Blazor
     {
         try
         {
+            var openAiKey = _configuration["OPENAI_API_KEY"];
+            
             var token = req.Headers["x-Authorization"].ToString().Replace("Bearer ", "");
             var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
             
@@ -140,7 +142,6 @@ public class Blazor
                 });
             }
 
-            var openAiKey = _configuration["OPENAI_API_KEY"];
             if (string.IsNullOrEmpty(openAiKey))
             {
                 return new BadRequestObjectResult(new DomainBasic.Models.Dto.ChatResponse 
@@ -186,7 +187,6 @@ public class Blazor
                     System.Text.Encoding.UTF8, 
                     "application/json")
             };
-            requestMessage.Headers.Remove("Authorization");
             requestMessage.Headers.Add("Authorization", $"Bearer {openAiKey}");
 
             var response = await client.SendAsync(requestMessage);

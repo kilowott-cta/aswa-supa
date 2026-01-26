@@ -30,37 +30,37 @@ builder.Services.AddTransient<Client>(sp =>
 });
 
 
-var bytes = Encoding.UTF8.GetBytes(configuration["JWT_SECRET"] ?? string.Empty);
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.MetadataAddress = $"{configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"]}/.well-known/openid-configuration";
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = $"{configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"]}/auth/v1",
-            ValidateAudience = true,
-            ValidAudience = "[authenticated]",
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidAlgorithms = new[] { SecurityAlgorithms.EcdsaSha256 }, // important!
-            IssuerSigningKey = new SymmetricSecurityKey(bytes)
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine("Authentication failed: " + context.Exception.Message);
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                Console.WriteLine("Token validated for: " + context.Principal?.Identity?.Name);
-                return Task.CompletedTask;
-            }
-        };
-    }   
-    );
+// var bytes = Encoding.UTF8.GetBytes(configuration["JWT_SECRET"] ?? string.Empty);
+// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//     .AddJwtBearer(options =>
+//     {
+//         options.MetadataAddress = $"{configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"]}/.well-known/openid-configuration";
+//         options.TokenValidationParameters = new TokenValidationParameters
+//         {
+//             ValidateIssuer = true,
+//             ValidIssuer = $"{configuration["Supabase:Url"] ?? configuration["SUPABASE_URL"]}/auth/v1",
+//             ValidateAudience = true,
+//             ValidAudience = "[authenticated]",
+//             ValidateLifetime = true,
+//             ValidateIssuerSigningKey = true,
+//             ValidAlgorithms = new[] { SecurityAlgorithms.EcdsaSha256 }, // important!
+//             IssuerSigningKey = new SymmetricSecurityKey(bytes)
+//         };
+//         options.Events = new JwtBearerEvents
+//         {
+//             OnAuthenticationFailed = context =>
+//             {
+//                 Console.WriteLine("Authentication failed: " + context.Exception.Message);
+//                 return Task.CompletedTask;
+//             },
+//             OnTokenValidated = context =>
+//             {
+//                 Console.WriteLine("Token validated for: " + context.Principal?.Identity?.Name);
+//                 return Task.CompletedTask;
+//             }
+//         };
+//     }   
+//     );
 
 builder.Services.AddAuthorization();
 

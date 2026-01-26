@@ -13,7 +13,7 @@ public class ChatService
         SupabaseAuthenticationService authService)
     {
         _httpClientFactory = httpClientFactory;
-        _chatEndpoint = "/api/chat";
+        _chatEndpoint = "/api/chats";
         _authService = authService;
     }
 

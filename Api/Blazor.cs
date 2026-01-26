@@ -21,7 +21,6 @@ public class Blazor
         PropertyNameCaseInsensitive = true
     };
     private readonly string? _openAiKey;
-    private static readonly HttpClient httpClient = new HttpClient();
 
     public Blazor(ILogger<Blazor> logger, IConfiguration configuration, Supabase.Client supabaseClient, IHttpClientFactory httpClientFactory)
     {
@@ -30,17 +29,6 @@ public class Blazor
         _supabaseClient = supabaseClient;
         _httpClientFactory = httpClientFactory;
         _openAiKey = _configuration["OPENAI_API_KEY"];
-    }
-
-    [Function("pingpong")]
-    public async Task<IActionResult> PingPong([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest req)
-    {
-        _logger.LogInformation("C# HTTP trigger function processed a request.");
-        _ = await _supabaseClient.InitializeAsync();
-        var url = _supabaseClient.Postgrest.BaseUrl;
-        ClaimsPrincipal user = req.HttpContext.User;
-
-        return new OkObjectResult($"Welcome {user?.Identity?.Name} to Functions with {url}. {_openAiKey?.Substring(0, 5)}...");
     }
 
     [Function("get-projects")]
@@ -92,8 +80,8 @@ public class Blazor
         }
     }
 
-    [Function("uploads")]
-    public async Task<IActionResult> FileUploads([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+    [Function("upload-files")]
+    public async Task<IActionResult> UploadFiles([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
     {
         try
         {
@@ -118,8 +106,8 @@ public class Blazor
         _logger.LogInformation("Processing file");
     });
 
-    [Function("chat")]
-    public async Task<IActionResult> Chat([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+    [Function("chats")]
+    public async Task<IActionResult> Chats([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
     {
         try
         {
@@ -232,41 +220,6 @@ public class Blazor
                 Success = false, 
                 Error = ex.Message 
             });
-        }
-    }
-
-    [Function("test-openai")]
-    public static async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
-        ILogger log)
-    {
-        string apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            return new BadRequestObjectResult("❌ Missing OPENAI_API_KEY environment variable");
-        }
-
-        try
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.openai.com/v1/models");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            var response = await httpClient.SendAsync(request);
-            string body = await response.Content.ReadAsStringAsync();
-
-            return new OkObjectResult(new
-            {
-                status = (int)response.StatusCode,
-                ok = response.IsSuccessStatusCode,
-                body
-            });
-        }
-        catch (Exception ex)
-        {
-            log.LogError(ex, "Error calling OpenAI API");
-            return new ObjectResult($"❌ Error: {ex.Message}") { StatusCode = 500 };
         }
     }
 }

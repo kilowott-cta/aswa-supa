@@ -1,0 +1,188 @@
+@using DomainBasic.Models.Dto
+@using System.Text.Json
+@inject IHttpClientFactory HttpClientFactory
+@inject SupabaseAuthenticationService AuthService
+
+<div class="mcp-client">
+    <h2>MCP Query Projects</h2>
+    
+    <div class="mcp-controls">
+        <div class="form-group">
+            <label>Filter By:</label>
+            <select @bind="_filterBy" class="form-control">
+                <option value="">None</option>
+                <option value="status">Status</option>
+                <option value="client">Client</option>
+                <option value="stage">Stage</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Filter Value:</label>
+            <input type="text" @bind="_filterValue" class="form-control" placeholder="Enter filter value..." />
+        </div>
+        
+        <div class="form-group">
+            <label>Limit:</label>
+            <input type="number" @bind="_limit" class="form-control" placeholder="10" min="1" max="100" />
+        </div>
+        
+        <button @onclick="QueryProjects" class="btn btn-primary" disabled="@_isLoading">
+            @if (_isLoading)
+            {
+                <span>Loading...</span>
+            }
+            else
+            {
+                <span>Query Projects</span>
+            }
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger">
+            <strong>Error:</strong> @_errorMessage
+        </div>
+    }
+
+    @if (_mcpResponse != null)
+    {
+        <div class="mcp-results">
+            <h3>Results</h3>
+            <p><strong>Status:</strong> @(_mcpResponse.Success ? "✅ Success" : "❌ Failed")</p>
+            <p><strong>Count:</strong> @_mcpResponse.Count projects</p>
+            
+            @if (_mcpResponse.Projects?.Any() == true)
+            {
+                <div class="projects-table">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Client</th>
+                                <th>Status</th>
+                                <th>Stage</th>
+                                <th>Owner</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in _mcpResponse.Projects)
+                            {
+                                <tr>
+                                    <td>@project.ProjectName</td>
+                                    <td>@project.ClientName</td>
+                                    <td>@project.Status</td>
+                                    <td>@project.Stage</td>
+                                    <td>@project.Owner</td>
+                                    <td>@project.UpdatedAt.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    @* @if (!string.IsNullOrEmpty(_rawResponse))
+    {
+        <details class="mcp-raw-response">
+            <summary>Raw MCP Response</summary>
+            <pre>@_rawResponse</pre>
+        </details>
+    } *@
+</div>
+
+@code {
+    private string _filterBy = "";
+    private string _filterValue = "";
+    private int? _limit = 10;
+    private bool _isLoading = false;
+    private string _errorMessage = string.Empty;
+    private string _rawResponse = string.Empty;
+    private McpQueryResponse? _mcpResponse;
+
+    private async Task QueryProjects()
+    {
+        _isLoading = true;
+        _errorMessage = string.Empty;
+        _rawResponse = string.Empty;
+        _mcpResponse = null;
+
+        try
+        {
+            var requestBody = new
+            {
+                parameters = new Dictionary<string, object?>()
+            };
+
+            // Add optional parameters
+            if (!string.IsNullOrEmpty(_filterBy) && !string.IsNullOrEmpty(_filterValue))
+            {
+                requestBody.parameters["filterBy"] = _filterBy;
+                requestBody.parameters["filterValue"] = _filterValue;
+            }
+
+            if (_limit.HasValue && _limit > 0)
+            {
+                requestBody.parameters["limit"] = _limit.Value;
+            }
+
+            var client = HttpClientFactory.CreateClient("ApiClient");
+            client.DefaultRequestHeaders.Add("apikey", AuthService.SupabaseKey);
+            client.DefaultRequestHeaders.Add("x-Authorization", $"Bearer {AuthService.AccessToken}");   
+            var response = await client.PostAsJsonAsync("/api/mcp-query-projects", requestBody);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                _rawResponse = jsonResponse;
+                
+                var mcpResult = JsonSerializer.Deserialize<McpResponse>(jsonResponse, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                if (mcpResult?.Content?.Any() == true)
+                {
+                    var textContent = mcpResult.Content[0].Text;
+                    _mcpResponse = JsonSerializer.Deserialize<McpQueryResponse>(textContent,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+            }
+            else
+            {
+                _errorMessage = $"HTTP {response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Exception: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // MCP Response Models
+    public class McpResponse
+    {
+        public List<McpContent>? Content { get; set; }
+        public bool IsError { get; set; }
+    }
+
+    public class McpContent
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
+    public class McpQueryResponse
+    {
+        public bool Success { get; set; }
+        public int Count { get; set; }
+        public List<DomainBasic.Models.Dto.Project>? Projects { get; set; }
+        public string? Error { get; set; }
+    }
+}

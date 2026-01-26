@@ -222,4 +222,101 @@ public class Blazor
             });
         }
     }
+
+    [Function("mcp-query-projects")]
+    public async Task<IActionResult> McpQueryProjects(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
+    {
+        try
+        {
+            using var reader = new StreamReader(req.Body);
+            var requestBody = await reader.ReadToEndAsync();
+            var mcpRequest = JsonSerializer.Deserialize<JsonElement>(requestBody, _jsonSerializerOptions);
+
+            var token = req.Headers["x-Authorization"].ToString().Replace("Bearer ", "");
+            var session = await _supabaseClient.Auth.SetSession(token, Guid.NewGuid().ToString());
+
+            // Extract parameters from MCP request format
+            string? filterBy = null;
+            string? filterValue = null;
+            int? limit = null;
+
+            if (mcpRequest.TryGetProperty("params", out var params_))
+            {
+                if (params_.TryGetProperty("filterBy", out var filterByProp))
+                    filterBy = filterByProp.GetString();
+                if (params_.TryGetProperty("filterValue", out var filterValueProp))
+                    filterValue = filterValueProp.GetString();
+                if (params_.TryGetProperty("limit", out var limitProp))
+                    limit = limitProp.GetInt32();
+            }
+            
+            // Query projects
+            var query = _supabaseClient.From<DomainBasic.Models.Dbo.Project>();
+
+            // Apply filters if provided
+            if (!string.IsNullOrEmpty(filterBy) && !string.IsNullOrEmpty(filterValue))
+            {
+                switch (filterBy.ToLower())
+                {
+                    case "status":
+                        query.Filter("status", Supabase.Postgrest.Constants.Operator.Equals, filterValue);
+                        break;
+                    case "client":
+                        query.Filter("client_name", Supabase.Postgrest.Constants.Operator.Equals, filterValue);
+                        break;
+                    case "stage":
+                        query.Filter("stage", Supabase.Postgrest.Constants.Operator.Equals, filterValue);
+                        break;
+                }
+            }
+
+            // Apply limit if provided
+            if (limit.HasValue && limit.Value > 0)
+            {
+                query.Limit(limit.Value);
+            }
+
+            var results = await query.Get();
+            var projects = results.Models.Select(p => p.ToDtoFromDbo()).ToList();
+
+            // Return in MCP format
+            return new OkObjectResult(new
+            {
+                content = new[]
+                {
+                    new
+                    {
+                        type = "text",
+                        text = JsonSerializer.Serialize(new
+                        {
+                            success = true,
+                            count = projects.Count,
+                            projects
+                        }, new JsonSerializerOptions { WriteIndented = true })
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in mcp-query-projects function");
+            return new OkObjectResult(new
+            {
+                content = new[]
+                {
+                    new
+                    {
+                        type = "text",
+                        text = JsonSerializer.Serialize(new
+                        {
+                            success = false,
+                            error = ex.Message
+                        })
+                    }
+                },
+                isError = true
+            });
+        }
+    }
 }
